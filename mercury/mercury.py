@@ -27,7 +27,7 @@ def main():
   
   submission_type_arguments = parser.add_argument_group("submission type arguments", "options that determine submission type")
   submission_type_arguments.add_argument("-g", "--organism", 
-                                         help="The organism type of the samples in the table\ndefault=\"sars-cov-2\"", default="sars-cov-2", metavar="\b",type=str)
+                                         help="The organism type of the samples in the table\ndefault=\"sars-cov-2\"", default="sars-cov-2", metavar="\b", type=str)
   submission_type_arguments.add_argument("-s", "--skip_ncbi", 
                                          help="Add to skip NCBI metadata preparation; prep only for GISAID submission", action="store_true", default=False)
   

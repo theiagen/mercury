@@ -1,4 +1,5 @@
 import mercury.Table as Table
+import mercury.Metadata as Metadata
 import logging
 import subprocess
 import sys
@@ -30,6 +31,24 @@ class Runner:
     self.reads_dehosted = options.using_reads_dehosted
     self.vadr_alert_limit = options.vadr_alert_limit
     self.number_n_threshold = options.number_n_threshold
+    
+    # set the data file names
+    self.read1_column_name = "read1_dehosted"
+    self.read2_column_name = "read2_dehosted"
+    self.assembly_fasta_column_name = "assembly_fasta"
+    self.assembly_mean_coverage_column_name = "assembly_mean_coverage"
+    
+    if self.clearlabs_data:
+      self.read1_column_name = "clearlabs_fastq_gz"
+      self.assembly_fasta_column_name = "clearlabs_fasta"
+      self.assembly_mean_coverage_column_name = "clearlabs_assembly_coverage"
+      
+    if self.reads_dehosted:
+      self.read1_column_name = "reads_dehosted"
+      
+    if self.organism not in ["sars-cov-2", "flu", "mpox"]:
+      self.logger.error("RUNNER:Error: Organism not recognized")
+      sys.exit(1)
 
   def check_gcloud_dependency(self):
     result = subprocess.run(
@@ -44,11 +63,20 @@ class Runner:
     self.logger.info("RUNNER:Found `gcloud storage cp` command, continuing")
 
   def run(self):
-    """This class runs the different parts of Mercury
+    """
+    This class orchestrates the different parts of Mercury
     """
     self.logger.info("RUNNER:Starting to run Mercury")
     self.logger.debug("RUNNER:Checking for `gcloud storage cp` command")
+    self.check_gcloud_dependency()
     
+    self.logger.debug("RUNNER:Gathering metadata")
     
+    metadata = Metadata(self.logger, self.organism, self.skip_ncbi, self.read1_column_name, self.read2_column_name, self.assembly_fasta_column_name, self.assembly_mean_coverage_column_name)
+    
+    required_metadata, optional_metadata = metadata.get_metadata()    
+    
+    table = Table(self.logger, self.input_table, self.table_name, self.samplenames, self.skip_county, self.skip_ncbi, self.clearlabs_data, self.reads_dehosted, required_metadata, optional_metadata)
+    table.process_table()
     
     
