@@ -13,6 +13,7 @@ class Metadata:
     self.read2_column_name = read2_column_name
     self.assembly_fasta_column_name = assembly_fasta_column_name
     self.assembly_mean_coverage_column_name = assembly_mean_coverage_column_name
+    self.table = None
     
   def sc2_biosample_metadata(self):
     biosample_required = ["submission_id", "bioproject_accession", "organism", "collecting_lab", "collection_date", "country", "state", "host_sci_name", "host_disease", "isolation_source"]
@@ -46,8 +47,8 @@ class Metadata:
     
   def sra_metadata(self):
     self.logger.debug("METADATA:Retrieving SRA metadata")
-    sra_required = ["bioproject_accession", "submission_id", "library_id", "organism", "isolation_source", "library_strategy", "library_source", "library_selection", "library_layout", "seq_platform", "instrument_model", "filetype", self.read1_column_name]
-    sra_optional = ["design_description", self.read2_column_name, "amplicon_primer_scheme", "amplicon_size", "assembly_method", "dehosting_method", "submitter_email"]
+    sra_required = ["bioproject_accession", "submission_id", "library_id", "organism", "isolation_source", "library_strategy", "library_source", "library_selection", "library_layout", "seq_platform", "instrument_model", "filetype"]
+    sra_optional = ["platform", "title", "design_description", "amplicon_primer_scheme", "amplicon_size", "assembly_method", "dehosting_method", "submitter_email"]
     return sra_required, sra_optional
 
   def genbank_metadata(self):  
@@ -60,38 +61,52 @@ class Metadata:
     """
     self.logger.debug("METADATA:Retrieving metadata requirements")
     if not self.skip_ncbi:
+      self.logger.debug("METADATA:NCBI submission is not skipping, retrieving NCIB-specific metadata requirements for " + self.organism)
       if self.organism == "sars-cov-2":
         biosample_required, biosample_optional = self.sc2_biosample_metadata()
         sra_required, sra_optional = self.sra_metadata()
         genbank_required, genbank_optional = self.genbank_metadata()
         
-        required_metadata = biosample_required + sra_required + genbank_required
-        optional_metadata = biosample_optional + sra_optional + genbank_optional
+        required_metadata = [biosample_required, sra_required, genbank_required]
+        optional_metadata = [biosample_optional, sra_optional, genbank_optional]
+        self.logger.debug("METADATA:NCBI-specific metadata retrieved for " + self.organism)
       elif self.organism == "flu":
         biosample_required, biosample_optional = self.flu_biosample_metadata()
         sra_required, sra_optional = self.sra_metadata()
         
-        required_metadata = biosample_required + sra_required
-        optional_metadata = biosample_optional + sra_optional
+        required_metadata = [biosample_required, sra_required]
+        optional_metadata = [biosample_optional, sra_optional]
+        self.logger.debug("METADATA:NCBI-specific metadata retrieved for " + self.organism)
       elif self.organism == "mpox":
         biosample_required, biosample_optional = self.mpox_biosample_metadata()
+        sra_required, sra_optional = self.sra_metadata()
         bankit_required, bankit_optional = self.bankit_metadata()
         
-        required_metadata = biosample_required + bankit_required
-        optional_metadata = biosample_optional + bankit_optional
+        required_metadata = [biosample_required, sra_required, bankit_required]
+        optional_metadata = [biosample_optional, sra_optional, bankit_optional]
+        self.logger.debug("METADATA:NCBI-specific metadata retrieved for " + self.organism)
+      else:
+        self.logger.debug("METADATA:NCBI-specific metadata could not be retrieved for " + self.organism)
+      
     else:
-      self.logger.debug("METADATA:Skipping NCBI metadata requirements")
-    
-    
+      self.logger.debug("METADATA:NCBI submission is skipped, no NCBI-specific metadata was retrieved")
+
+    self.logger.debug("METADATA:Retrieving GISAID metadata requirements for " + self.organism)
     if self.organism == "sars-cov-2":
       gisaid_required, gisaid_optional = self.sc2_gisaid_metadata()
       
-      required_metadata = required_metadata + gisaid_required
-      optional_metadata = optional_metadata + gisaid_optional 
+      required_metadata = required_metadata + [gisaid_required]
+      optional_metadata = optional_metadata + [gisaid_optional] 
+      self.logger.debug("METADATA:GISAID metadata retrieved successfully for " + self.organism)
     elif self.organism == "mpox":
       gisaid_required, gisaid_optional = self.mpox_gisaid_metadata()
      
-      required_metadata = required_metadata + gisaid_required
-      optional_metadata = optional_metadata + gisaid_optional
+      required_metadata = required_metadata + [gisaid_required]
+      optional_metadata = optional_metadata + [gisaid_optional]
+      self.logger.debug("METADATA:GISAID metadata retrieved successfully for " + self.organism)
+    else:
+      self.logger.debug("METADATA:GISAID metadata could not be retrieved for " + self.organism)
     
-    return required_metadata, optional_metadata
+    self.logger.debug("METADATA:Metadata requirements retrieved successfully")
+    return [required_metadata, optional_metadata]
+  

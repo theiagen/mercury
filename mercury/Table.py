@@ -1,19 +1,38 @@
 import pandas as pd
 import numpy as np
+import subprocess
 import re
+import sys
 
 
 class Table:
   """This class controls the manipulation of the table
   """
   
-  def __init__(self, logger, input_table, table_name, samplenames, skip_county, skip_ncbi, required_metadata, optional_metadata):
+  def __init__(self, logger, organism, input_table, table_name, samplenames, skip_county, skip_ncbi, usa_territory, metadata_list, vadr_alert_limit, number_n_threshold, output_name, gcp_bucket_uri, single_end):
     self.logger = logger
+    self.logger.debug("TABLE:Initializing Table class")
+    
+    self.organism = organism
     self.input_table = input_table
     self.table_name = table_name
     self.samplenames = samplenames
     self.skip_county = skip_county
     self.skip_ncbi = skip_ncbi
+    self.usa_territory = usa_territory
+    self.metadata_liust = metadata_list
+    
+    self.vadr_alert_limit = vadr_alert_limit
+    self.number_n_threshold = number_n_threshold
+  
+    self.output_name = output_name
+    self.exclusion_table_name = self.output_prefix + "_excluded_samples.tsv"
+
+    self.gcp_bucket_uri = gcp_bucket_uri
+    self.single_end = single_end
+    # transform the input table into a pandas dataframe
+    self.logger.debug("TABLE:Loading input table")
+    self.table = pd.read_csv(self.input_table, sep="\t", header=0, dtype={self.table_name: 'str'})
 
   def get_year_from_date(self, date):
     """This function extracts the year from a date in ISO 8601 format
@@ -30,71 +49,245 @@ class Table:
       return np.nan
     else:
       return date.split("-")[0]
-        
-  def create_table(self):
-    """This function reads the table from the input file and returns it as a DataFrame
-
-    Returns:
-      DataFrame: The table as a DataFrame
-    """
-    table = pd.read_csv(self.input_table, sep="\t", header=0, dtype={self.table_name: 'str'})
-    return table
-
-  def extract_samples(self, table):
+           
+  def extract_samples(self):
     """This function pulls out the rows that belong to each sample in the samplenames list. It also converts the column names to lowercase.
-
-    Args:
-     table (DataFrame): Table containing metadata
-
+    
     Returns:
-      DataFrame: The reduced table
+      DataFrame: The reduced table with lowercase headers
     """
-    working_table = table[table[self.table_name].isin(self.samplenames.split(","))]
+    self.logger.debug("TABLE:Extracting samples from table")
+    working_table = self.table[self.table[self.table_name].isin(self.samplenames.split(","))]
     working_table.columns = working_table.columns.str.lower()
     return working_table
     
-  def create_standard_variables(self, table):
+  def create_standard_variables(self):
     """This function creates standard variables in the table
-    
-    Args:
-      table (DataFrame): Table containing metadata
     """
     self.logger.debug("TABLE:Creating standard variables like date and host")
-    table["year"] = table["collection_date"].apply(lambda x: self.get_year_from_date(x))
-    table["host"] = "Human" #(????)
+    self.table["year"] = self.table["collection_date"].apply(lambda x: self.get_year_from_date(x))
+    self.table["host"] = "Human" #(????)
     if self.skip_ncbi:
       self.logger.debug("TABLE:Skipping creating NCBI-specific variables")
     else:
       self.logger.debug("TABLE:Creating NCBI-specific variables")
-      table["host_sci_name"] = "Homo sapiens"
-      table["filetype"] = "fastq"
-      table["isolate"] = (table["organism"] + "/" + table["host"] + "/" + table["country"] + "/" + table["submission_id"] + "/" + table["year"])
-      table["biosample_accession"] = "{populate_with_BioSample_accession}"
-      table["design_description"] = "Whole genome sequencing of " + table["organism"]
+      self.table["host_sci_name"] = "Homo sapiens"
+      self.table["filetype"] = "fastq"
+      
+      if self.organism != "flu":
+        self.table["isolate"] = (self.table["organism"] + "/" + self.table["host"] + "/" + self.table["country"] + "/" + self.table["submission_id"] + "/" + self.table["year"])
+      
+      self.table["biosample_accession"] = "{populate_with_BioSample_accession}"
+      self.table["design_description"] = "Whole genome sequencing of " + self.table["organism"] 
     
-  def remove_nas(self, table, required_metadata):
-    """This function removes rows with missing values in the required metadata columns and returns the cleaned table and a table of excluded samples
-
-    Args:
-      table (DataFrame): Table containing metadata
-      required_metadata (List): List of columns that are required to have values
+  def remove_nas(self):
+    """This function removes rows with missing values in the required metadata columns and writes them to a file
     """
     # replace blank cells with NaNs (blanks are missing values)
-    table.replace(r'^\s+$', np.nan, regex=True)
+    self.table.replace(r'^\s+$', np.nan, regex=True)
     # remove rows with missing values in the required metadata columns
-    excluded_samples = table[table[required_metadata].isna().any(axis=1)]
+    excluded_samples = self.table[self.table[self.required_metadata].isna().any(axis=1)]
     # set the index to the sample name
     excluded_samples.set_index("~{table_name}_id".lower(), inplace=True)
     # remove all optional columns so only required columns are shown
-    excluded_samples = excluded_samples[excluded_samples.columns.intersection(required_metadata)]
+    excluded_samples = excluded_samples[excluded_samples.columns.intersection(self.required_metadata)]
     # remove all NON-NA columns so only columns with NAs remain; Shelly is a wizard and I love her 
     excluded_samples = excluded_samples.loc[:, excluded_samples.isna().any()] 
     # remove all rows that are required with NaNs from table
-    table.dropna(subset=required_metadata, axis=0, how='any', inplace=True) 
+    self.table.dropna(subset=self.required_metadata, axis=0, how='any', inplace=True) 
 
-    return table, excluded_samples
+    with open(self.excluded_table_name, "a") as exclusions:
+      exclusions.write("\nSamples excluded for missing required metadata (will have empty values in indicated columns):\n")
+    excluded_samples.to_csv(self.excluded_table_name, mode='a', sep='\t')
+    
+  def perform_quality_check(self):
+    """This function removes samples based on the number of VADR alerts and the number of Ns (for "sars-cov-2" only) and writes them to a file
+    """
+    quality_exclusion = pd.DataFrame()
+    for index, row in self.table.iterrows():
+      if ("VADR skipped due to poor assembly") in str(row["vadr_num_alerts"]):
+        notification = "VADR skipped due to poor assembly"
+        quality_exclusion = pd.concat([quality_exclusion, pd.Series({"sample_name": row["~{table_name}_id".lower()], "message": notification}).to_frame().T], ignore_index=True)
+      elif int(row["vadr_num_alerts"]) > ~{self.vadr_alert_limit}:
+        notification = "VADR number alerts too high: " + str(row["vadr_num_alerts"]) + " greater than limit of " + str(~{self.vadr_alert_limit})
+        quality_exclusion = pd.concat([quality_exclusion, pd.Series({"sample_name": row["~{table_name}_id".lower()], "message": notification}).to_frame().T], ignore_index=True)
+      elif int(row["number_n"]) > ~{self.number_n_threshold}:
+        notification="Number of Ns was too high: " + str(row["number_n"]) + " greater than limit of " + str(~{self.number_n_threshold})
+        quality_exclusion = pd.concat([quality_exclusion, pd.Series({"sample_name": row["~{table_name}_id".lower()], "message": notification}).to_frame().T], ignore_index=True)
+      if pd.isna(row["year"]):
+        notification="The collection date format was incorrect"
+        quality_exclusion = pd.concat([quality_exclusion, pd.Series({"sample_name": row["~{table_name}_id".lower()], "message": notification}).to_frame().T], ignore_index=True)
 
+    with open(self.exclusion_table_name, "w") as exclusions:
+      exclusions.write("Samples excluded for quality thresholds:\n")
+    quality_exclusion.to_csv(self.exclusion_table_name, mode='a', sep='\t', index=False)
+      
+    self.table.drop(self.table.index[self.table["vadr_num_alerts"].astype(str).str.contains("VADR skipped due to poor assembly")], inplace=True)
+    self.table.drop(self.table.index[self.table["vadr_num_alerts"].astype(int) > ~{self.vadr_alert_limit}], inplace=True)
+    self.table.drop(self.table.index[self.table["number_n"].astype(int) > ~{self.number_n_threshold}], inplace=True)
+    self.table.drop(self.table.index[self.table["year"].isna()], inplace=True)
+
+  def split_metadata(self):
+    self.logger.debug("TABLE:Splitting metadata list into separate lists")
+    
+    temp_required_metadata = self.metadata_list[0]
+    temp_optional_metadata = self.metadata_list[1]
+    
+    if self.organism == "sars-cov-2":
+      self.biosample_required, self.sra_required, self.genbank_required, self.gisaid_required = temp_required_metadata[0], temp_required_metadata[1], temp_required_metadata[2], temp_required_metadata[3]
+      self.biosample_optional, self.sra_optional, self.genbank_optional, self.gisaid_optional = temp_optional_metadata[0], temp_optional_metadata[1], temp_optional_metadata[2], temp_optional_metadata[3]
+      
+    elif self.organism == "flu":
+      self.biosample_required, self.sra_required = temp_required_metadata[0], temp_required_metadata[1]
+      self.biosample_optional, self.sra_optional = temp_optional_metadata[0], temp_optional_metadata[1]
+    
+    elif self.organism == "mpox":
+      self.biosample_required, self.sra_required, self.bankit_required, self.gisaid_required = temp_required_metadata[0], temp_required_metadata[1], temp_required_metadata[2], temp_required_metadata[3]
+      self.biosample_optional, self.sra_optional, self.bankit_optional, self.gisaid_required = temp_optional_metadata[0], temp_optional_metadata[1], temp_optional_metadata[2], temp_optional_metadata[3]
+
+    self.required_metadata = [item for group in temp_required_metadata for item in group]
+    self.optional_metadata = [item for group in temp_optional_metadata for item in group]
+  
+    self.logger.debug("TABLE:Metadata split!")
+
+  def make_biosample_csv(self):
+    self.logger.debug("TABLE:Creating BioSample metadata file")
+    biosample_metadata = self.table[self.biosample_required].copy()
+    for column in self.biosample_optional:
+      if column in self.table.columns:
+        biosample_metadata[column] = self.table[column]
+      else:
+        biosample_metadata[column] = ""
+    
+    biosample_metadata.rename(columns={"submission_id" : "sample_name",}, inplace=True)
+    
+    if self.organism == "mpox" or self.organism == "sars-cov-2":
+      biosample_metadata["geo_loc_name"] = biosample_metadata["country"] + ": " + biosample_metadata["state"]
+      biosample_metadata.drop(["country", "state"], axis=1, inplace=True)
+
+      biosample_metadata.rename(columns={"collecting_lab" : "collected_by", "host_sci_name" : "host", "patient_gender" : "host_sex", "patient_age" : "host_age"}, inplace=True)      
+      if self.organism == "sars-cov-2":
+        biosample_metadata.rename(columns={"treatment" : "antiviral_treatment_agent"}, inplace=True)
+      
+    biosample_metadata.to_csv(self.output_name + "_biosample_metadata.tsv", sep='\t', index=False)
+    self.logger.debug("TABLE:BioSample metadata file created")
+
+  def make_sra_csv(self):
+    self.logger.debug("TABLE:Creating SRA metadata file")
+    sra_metadata = self.table[self.sra_required].copy()
+    for column in self.sra_optional:
+      if column in self.table.columns:
+        sra_metadata[column] = self.table[column]
+      else:
+        sra_metadata[column] = ""
+    
+    sra_metadata["biosample_accession"] = "{populate with BioSample accession}"
+    
+    sra_metadata.rename(columns={"submission_id" : "sample_name", "library_id" : "library_ID"}, inplace=True)
+  
+    if self.organism != "flu":
+      # these columns are named differently in the mercury metadata preparation spreadsheets 
+      sra_metadata.rename(columns={"amplicon_primer_scheme" : "amplicon_PCR_primer_scheme", "submitter_email" : "sequence_submitter_contact_email", "assembly_method" : "raw_sequence_data_processing_method", "seq_platform" : "platform"}, inplace=True)
+      sra_metadata["title"] = "Genomic sequencing of " + sra_metadata["organism"] + ": " + sra_metadata["isolation_source"]
+      sra_metadata.drop(["organism", "isolation_source"], axis=1, inplace=True)
+
+    sra_metadata["filename"] = sra_metadata["sample_name"] + "_R1.fastq.gz"
+    self.table[self.read1_column_name].to_csv("sra_filepaths.tsv", index=False, header=False)
+    if (self.read2_column_name in self.table.columns) and (self.single_end == False):
+      sra_metadata["filename2"] = sra_metadata["sample_name"] + "_R2.fastq.gz"
+      self.table[self.read2_column_name].to_csv("sra_filepaths.tsv", mode='a', index=False, header=False)
+    elif (self.read2_column_name not in self.table.columns and self.single_end == False):
+      self.logger.error("TABLE:Error: Paired-end data was indicated but no read2 column was found in the table")
+      sys.exit(1)
+    
+    sra_metadata.to_csv("~{output_name}_sra_metadata.tsv", sep='\t', index=False)
+
+    self.logger.info("TABLE:Copying over SRA files to the indicated GCP bucket ({})".format(self.gcp_bucket_uri))
+    
+    transfer_command = "gcloud storage -m cp -I sra_filepaths.tsv " + self.gcp_bucket_uri
+    self.logger.debug("TABLE:Running command: " + transfer_command)
+    try:
+      subprocess.run(transfer_command, shell=True, check=True)
+    except:
+      self.logger.error("TABLE:Error: non-zero exit code when copying files to GCP bucket ({})".format(self.gcp_bucket_uri))
+      sys.exit(1)
+    self.logger.info("TABLE:Files copied to the indicated GCP bucket ({})".format(self.gcp_bucket_uri))
+    
+    self.logger.debug("TABLE:SRA metadata file created")
+    
+  def make_genbank_csv(self):
+    self.logger.debug("TABLE:Creating Genbank metadata file")
+    genbank_metadata = self.table[self.genbank_required].copy()
+    
+    update_country = False
+    for column in self.genbank_optional:
+      if column in self.table.columns:
+        genbank_metadata[column] = self.table[column]
+        if column == "state":
+          update_country = True
+      else:
+        genbank_metadata[column] = ""
+    
+    genbank_metadata.rename(columns={"submission_id" : "Sequence_ID", "host_sci_name" : "host", "collection_date" : "collection-date", "isolation_source" : "isolation-source", "biosample_accession" : "BioSample", "bioproject_accession" : "BioProject"}, inplace=True)
+  
+    if update_country:
+        genbank_metadata["country"] = genbank_metadata["country"] + ": " + genbank_metadata["state"]
+      
+    # remove state column from genbank
+    genbank_metadata.drop("state", axis=1, inplace=True)
+    
+    self.logger.debug("TABLE:Now renaming the header of every fasta file to the preferred format")
+    
+    genbank_metadata["new_filenames"] = genbank_metadata["Sequence_ID"] + "_genbank_untrimmed.fasta"
+    genbank_metadata[self.assembly_fasta_column_name].to_csv("assembly_filepaths.tsv", index=False, header=False)
+    
+
+    download_command = "gcloud storage -m cp -I assembly_filepaths.tsv ." 
+    
+    
+    
+    
+    
+    
+    
+    genbank_metadata.to_csv(self.output_name + "_genbank_metadata.tsv", sep='\t', index=False)
+    self.logger.debug("TABLE:Genbank metadata file created")
+
+    
   def process_table(self):
-    table = self.create_table()
-    table = self.extract_samples(table)
-    self.create_standard_variables(table)
+    self.split_metadata()
+    self.extract_samples()
+    self.perform_quality_check()
+    self.remove_nas()
+    
+    if self.table.empty:
+      self.logger.error("TABLE:ENDING PROCESS! No samples were found in the table after extraction and cleaning. Check the input table and/or the excluded samples table and try again.")
+      sys.exit(1)
+    
+    self.create_standard_variables()
+    
+    self.logger.debug("TABLE:Now creating metadata files")
+    if not self.skip_ncbi:
+      self.logger.debug("TABLE:NCBI submission NOT skipped, now preparing data for NCBI")
+    
+      self.make_biosample_csv()
+      self.make_sra_csv()
+      if self.organism == "sars-cov-2":
+        self.make_genbank_csv()
+      elif self.organism == "mpox":
+        self.make_bankit_src()
+    
+      self.logger.debug("TABLE:NCBI metadata prepared")
+    
+    if self.organism != "flu":
+      self.logger.debug("TABLE:Creating GISAID metadata")
+      self.make_gisaid_csv()
+    
+    self.logger.debug("TABLE:Metadata tables made")
+    
+      
+    
+    
+    return self.table
+    
+    

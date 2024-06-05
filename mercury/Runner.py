@@ -38,6 +38,8 @@ class Runner:
     self.assembly_fasta_column_name = "assembly_fasta"
     self.assembly_mean_coverage_column_name = "assembly_mean_coverage"
     
+    self.single_end = options.single_end
+    
     if self.clearlabs_data:
       self.read1_column_name = "clearlabs_fastq_gz"
       self.assembly_fasta_column_name = "clearlabs_fasta"
@@ -73,10 +75,9 @@ class Runner:
     self.logger.debug("RUNNER:Gathering metadata")
     
     metadata = Metadata(self.logger, self.organism, self.skip_ncbi, self.read1_column_name, self.read2_column_name, self.assembly_fasta_column_name, self.assembly_mean_coverage_column_name)
+    metadata_list = metadata.get_metadata()      
     
-    required_metadata, optional_metadata = metadata.get_metadata()    
-    
-    table = Table(self.logger, self.input_table, self.table_name, self.samplenames, self.skip_county, self.skip_ncbi, self.clearlabs_data, self.reads_dehosted, required_metadata, optional_metadata)
+    self.logger.debug("RUNNER:Processing table")
+    table = Table(self.logger, self.organism, self.input_table, self.table_name, self.samplenames, self.skip_county, self.skip_ncbi, self.usa_territory, metadata_list, self.vadr_alert_limit, self.number_n_threshold, self.output_name, self.gcp_bucket_uri, self.single_end)
     table.process_table()
-    
-    
+        

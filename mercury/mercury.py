@@ -40,6 +40,8 @@ def main():
                                        help="Add if using Clearlabs-generated data and metrics", action="store_true", default=False)
   customization_arguments.add_argument("-r", "--using_reads_dehosted",
                                        help="Add if using reads_dehosted instead of clearlabs data", action="store_true", default=False)
+  customization_arguments.add_argument("-e", "--single_end",
+                                      help="Add if the data is single-end", action="store_true", default=False)
   
   qc_arguments = parser.add_argument_group("quality control arguments", "options that control quality thresholds")
   qc_arguments.add_argument("-a", "--vadr_alert_limit",
