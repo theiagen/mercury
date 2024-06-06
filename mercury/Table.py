@@ -159,7 +159,7 @@ class Table:
       else:
         biosample_metadata[column] = ""
     
-    biosample_metadata.rename(columns={"submission_id" : "sample_name",}, inplace=True)
+    biosample_metadata.rename(columns={"submission_id" : "sample_name"}, inplace=True)
     
     if self.organism == "mpox" or self.organism == "sars-cov-2":
       biosample_metadata["geo_loc_name"] = biosample_metadata["country"] + ": " + biosample_metadata["state"]
@@ -192,28 +192,32 @@ class Table:
       sra_metadata.drop(["organism", "isolation_source"], axis=1, inplace=True)
 
     sra_metadata["filename"] = sra_metadata["sample_name"] + "_R1.fastq.gz"
-    self.table[self.read1_column_name].to_csv("sra_filepaths.tsv", index=False, header=False)
+    #self.table[self.read1_column_name].to_csv("sra_filepaths.tsv", index=False, header=False)
+    read_tuples = list(zip(self.table[self.read1_column_name], sra_metadata["filename"]))
+    #read_tuples = list(sra_metadata[self.read1_column_name, "filename"].itertuples(index=False, name=None))
     if (self.read2_column_name in self.table.columns) and (self.single_end == False):
       sra_metadata["filename2"] = sra_metadata["sample_name"] + "_R2.fastq.gz"
-      self.table[self.read2_column_name].to_csv("sra_filepaths.tsv", mode='a', index=False, header=False)
+   #   self.table[self.read2_column_name].to_csv("sra_filepaths.tsv", mode='a', index=False, header=False)
+      read_tuples = read_tuples + list(zip(self.table[self.read2_column_name], sra_metadata["filename"]))
+   #   read_tuples = read_tuples + list(sra_metadata[self.read2_column_name, "filename2"].itertuples(index=False, name=None))
     elif (self.read2_column_name not in self.table.columns and self.single_end == False):
       self.logger.error("TABLE:Error: Paired-end data was indicated but no read2 column was found in the table")
-      sys.exit(1)
-    
+      sys.exit(1)    
+    print(read_tuples)
     sra_metadata.to_csv("~{output_name}_sra_metadata.tsv", sep='\t', index=False)
-
+    
     self.logger.info("TABLE:Copying over SRA files to the indicated GCP bucket ({})".format(self.gcp_bucket_uri))
+    for oldname, newname in read_tuples:
+      transfer_command = "gcloud storage -m cp " + oldname + " " + self.gcp_bucket_uri + "/" + newname
+      self.logger.debug("TABLE:Running command: " + transfer_command)
+      try:
+        subprocess.run(transfer_command, shell=True, check=True)
+      except:
+        self.logger.error("TABLE:Error: non-zero exit code when copying files to GCP bucket ({})".format(self.gcp_bucket_uri))
+        sys.exit(1)
     
-    transfer_command = "gcloud storage -m cp -I sra_filepaths.tsv " + self.gcp_bucket_uri
-    self.logger.debug("TABLE:Running command: " + transfer_command)
-    try:
-      subprocess.run(transfer_command, shell=True, check=True)
-    except:
-      self.logger.error("TABLE:Error: non-zero exit code when copying files to GCP bucket ({})".format(self.gcp_bucket_uri))
-      sys.exit(1)
     self.logger.info("TABLE:Files copied to the indicated GCP bucket ({})".format(self.gcp_bucket_uri))
-    
-    self.logger.debug("TABLE:SRA metadata file created")
+    self.logger.debug("TABLE:SRA metadata file created and data transferred")
     
   def make_genbank_csv(self):
     self.logger.debug("TABLE:Creating Genbank metadata file")
@@ -231,7 +235,7 @@ class Table:
     genbank_metadata.rename(columns={"submission_id" : "Sequence_ID", "host_sci_name" : "host", "collection_date" : "collection-date", "isolation_source" : "isolation-source", "biosample_accession" : "BioSample", "bioproject_accession" : "BioProject"}, inplace=True)
   
     if update_country:
-        genbank_metadata["country"] = genbank_metadata["country"] + ": " + genbank_metadata["state"]
+      genbank_metadata["country"] = genbank_metadata["country"] + ": " + genbank_metadata["state"]
       
     # remove state column from genbank
     genbank_metadata.drop("state", axis=1, inplace=True)
@@ -239,20 +243,66 @@ class Table:
     self.logger.debug("TABLE:Now renaming the header of every fasta file to the preferred format")
     
     genbank_metadata["new_filenames"] = genbank_metadata["Sequence_ID"] + "_genbank_untrimmed.fasta"
-    genbank_metadata[self.assembly_fasta_column_name].to_csv("assembly_filepaths.tsv", index=False, header=False)
+    assembly_tuples = list(zip(self.table[self.assembly_fasta_column_name], genbank_metadata["new_filenames"], genbank_metadata["Sequence_ID"]))
     
-
-    download_command = "gcloud storage -m cp -I assembly_filepaths.tsv ." 
-    
-    
-    
-    
-    
-    
+    for oldname, newname, sequence_id in assembly_tuples:
+      assembly_rename_command = "gcloud storage -m cp " + oldname + " ./" + newname
+      self.logger.debug("TABLE:Running command: " + assembly_rename_command)
+      try:
+        subprocess.run(assembly_rename_command, shell=True, check=True)
+      except:
+        self.logger.error("TABLE:Error: non-zero exit code when copying files to working directory")
+        sys.exit(1)
+      
+      sed_command = "sed -i '1s|.*|>" + sequence_id + "|' " + newname
+      self.logger.debug("TABLE:Running command: " + sed_command)
+      try:
+        subprocess.run(sed_command, shell=True, check=True)
+      except:
+        self.logger.error("TABLE:Error: non-zero exit code when rewriting assembly header")
+        sys.exit(1)
     
     genbank_metadata.to_csv(self.output_name + "_genbank_metadata.tsv", sep='\t', index=False)
     self.logger.debug("TABLE:Genbank metadata file created")
+  
+  def make_gisaid_csv(self):
+    self.logger.debug("TABLE:Creating GISAID metadata file")
+    
+    
+  def make_bankit_src(self):
+    self.logger.debug("TABLE:Creating bankit metadata file")
+    bankit_metadata = self.table[self.bankit_required].copy()
+    for column in self.bankit_optional:
+      if column in self.table.columns:
+        bankit_metadata[column] = self.table[column]
+      else:
+        bankit_metadata[column] = ""
+    bankit_metadata.rename(columns={"submission_id" : "Sequence_ID", "isolate" : "Isolate", "collection_date" : "Collection_date", "country" : "Country", "host" : "Host", "isolation_source" : "Isolation_source"}, inplace=True)
 
+    self.logger.debug("TABLE:Now renaming the header of every fasta file to the preferred format")
+    
+    bankit_metadata["new_filenames"] = bankit_metadata["Sequence_ID"] + "_bankit.fasta"
+    assembly_tuples = list(zip(self.table[self.assembly_fasta_column_name], bankit_metadata["new_filenames"], bankit_metadata["Sequence_ID"]))
+    
+    for oldname, newname, sequence_id in assembly_tuples:
+      assembly_rename_command = "gcloud storage -m cp " + oldname + " ./" + newname
+      self.logger.debug("TABLE:Running command: " + assembly_rename_command)
+      try:
+        subprocess.run(assembly_rename_command, shell=True, check=True)
+      except:
+        self.logger.error("TABLE:Error: non-zero exit code when copying files to working directory")
+        sys.exit(1)
+      
+      sed_command = "sed -i '1s|.*|>" + sequence_id + "|' " + newname
+      self.logger.debug("TABLE:Running command: " + sed_command)
+      try:
+        subprocess.run(sed_command, shell=True, check=True)
+      except:
+        self.logger.error("TABLE:Error: non-zero exit code when rewriting assembly header")
+        sys.exit(1)
+    
+    bankit_metadata.to_csv(self.output_name + ".src", sep='\t', index=False)
+    self.logger.debug("TABLE:Genbank metadata file created")    
     
   def process_table(self):
     self.split_metadata()
