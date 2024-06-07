@@ -1,19 +1,12 @@
-import pandas as pd
-import re
-
 class Metadata:
   """This class controls the various different metadata requirements
   """
   
-  def __init__(self, logger, organism, skip_ncbi, read1_column_name, read2_column_name, assembly_fasta_column_name, assembly_mean_coverage_column_name):
+  def __init__(self, logger, organism, skip_ncbi, assembly_mean_coverage_column_name):
     self.logger = logger
     self.organism = organism
     self.skip_ncbi = skip_ncbi
-    self.read1_column_name = read1_column_name
-    self.read2_column_name = read2_column_name
-    self.assembly_fasta_column_name = assembly_fasta_column_name
     self.assembly_mean_coverage_column_name = assembly_mean_coverage_column_name
-    self.table = None
     
   def sc2_biosample_metadata(self):
     biosample_required = ["submission_id", "bioproject_accession", "organism", "collecting_lab", "collection_date", "country", "state", "host_sci_name", "host_disease", "isolation_source"]
@@ -21,7 +14,7 @@ class Metadata:
     return biosample_required, biosample_optional
 
   def sc2_gisaid_metadata(self):     
-    gisaid_required = ["gisaid_submitter", "submission_id", "collection_date", "continent", "country", "state", "host", "seq_platform", self.assembly_fasta_column_name, "assembly_method", self.assembly_mean_coverage_column_name, "collecting_lab", "collecting_lab_address", "submitting_lab", "submitting_lab_address", "authors"]
+    gisaid_required = ["gisaid_submitter", "submission_id", "collection_date", "continent", "country", "state", "host", "seq_platform", "assembly_method", self.assembly_mean_coverage_column_name, "collecting_lab", "collecting_lab_address", "submitting_lab", "submitting_lab_address", "authors"]
     gisaid_optional = ["gisaid_virus_name", "additional_host_information", "county", "purpose_of_sequencing", "patient_gender", "patient_age", "patient_status", "specimen_source", "outbreak", "last_vaccinated", "treatment", "consortium"]
     return gisaid_required, gisaid_optional
 
@@ -31,7 +24,7 @@ class Metadata:
     return biosample_required, biosample_optional
   
   def mpox_gisaid_metadata(self):
-    gisaid_required = ["gisaid_submitter", "gisaid_virus_name", "submission_id", "collection_date", "continent", "country", "state", "host", "seq_platform", self.assembly_fasta_column_name, "assembly_method", self.assembly_mean_coverage_column_name, "collecting_lab", "collecting_lab_address", "submitting_lab", "submitting_lab_address", "authors"]
+    gisaid_required = ["gisaid_submitter", "gisaid_virus_name", "submission_id", "collection_date", "continent", "country", "state", "host", "seq_platform", "assembly_method", self.assembly_mean_coverage_column_name, "collecting_lab", "collecting_lab_address", "submitting_lab", "submitting_lab_address", "authors"]
     gisaid_optional = ["county", "purpose_of_sequencing", "patient_gender", "patient_age", "patient_status", "specimen_source", "outbreak", "last_vaccinated", "treatment"]
     return gisaid_required, gisaid_optional
 
@@ -41,7 +34,7 @@ class Metadata:
     return biosample_required, biosample_optional
 
   def bankit_metadata(self):
-    bankit_required = ["submission_id", "collection_date", "country", "host", self.assembly_fasta_column_name]
+    bankit_required = ["submission_id", "collection_date", "country", "host"]
     bankit_optional = ["isolate", "isolation_source"]
     return bankit_required, bankit_optional
     
@@ -52,7 +45,7 @@ class Metadata:
     return sra_required, sra_optional
 
   def genbank_metadata(self):  
-    genbank_required = ["submission_id", "country", "host_sci_name", "collection_date", "isolation_source", "biosample_accession", "bioproject_accession", self.assembly_fasta_column_name]
+    genbank_required = ["submission_id", "country", "host_sci_name", "collection_date", "isolation_source", "biosample_accession", "bioproject_accession"]
     genbank_optional = ["isolate", "state"]
     return genbank_required, genbank_optional
 

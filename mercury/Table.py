@@ -9,23 +9,27 @@ class Table:
   """This class controls the manipulation of the table
   """
   
-  def __init__(self, logger, organism, input_table, table_name, samplenames, skip_county, skip_ncbi, usa_territory, metadata_list, vadr_alert_limit, number_n_threshold, output_name, gcp_bucket_uri, single_end):
+  def __init__(self, logger, organism, input_table, table_name, samplenames, skip_county, skip_ncbi, usa_territory, metadata_list, vadr_alert_limit, number_n_threshold, assembly_fasta_column_name, output_prefix, gcp_bucket_uri, single_end, read1_column_name,  assembly_mean_coverage_column_name, read2_column_name=""):
     self.logger = logger
     self.logger.debug("TABLE:Initializing Table class")
     
     self.organism = organism
     self.input_table = input_table
-    self.table_name = table_name
+    self.table_name = table_name + "_id"
     self.samplenames = samplenames
     self.skip_county = skip_county
     self.skip_ncbi = skip_ncbi
     self.usa_territory = usa_territory
-    self.metadata_liust = metadata_list
+    self.metadata_list = metadata_list
     
     self.vadr_alert_limit = vadr_alert_limit
     self.number_n_threshold = number_n_threshold
+    self.assembly_fasta_column_name = assembly_fasta_column_name
+    self.read1_column_name = read1_column_name
+    self.read2_column_name = read2_column_name
+    self.assembly_mean_coverage_column_name = assembly_mean_coverage_column_name
   
-    self.output_name = output_name
+    self.output_prefix = output_prefix
     self.exclusion_table_name = self.output_prefix + "_excluded_samples.tsv"
 
     self.gcp_bucket_uri = gcp_bucket_uri
@@ -57,7 +61,7 @@ class Table:
       DataFrame: The reduced table with lowercase headers
     """
     self.logger.debug("TABLE:Extracting samples from table")
-    working_table = self.table[self.table[self.table_name].isin(self.samplenames.split(","))]
+    working_table = self.table[self.table[self.table_name].isin(self.samplenames)]
     working_table.columns = working_table.columns.str.lower()
     return working_table
     
@@ -80,6 +84,19 @@ class Table:
       self.table["biosample_accession"] = "{populate_with_BioSample_accession}"
       self.table["design_description"] = "Whole genome sequencing of " + self.table["organism"] 
     
+    if self.organism == "sars-cov-2":
+      self.table["gisaid_organism"] = "hCoV-19"
+    elif self.organsim == "mpox":
+      self.table["gisaid_organism"] = "mpx/A"
+
+    if self.organism != "flu":
+      if self.usa_territory:
+        # if usa territory, use "state" (e.g., Puerto Rico) instead of country (USA)
+        self.table["gisaid_virus_name"] = (self.table["gisaid_organism"] + "/" + self.table["state"] + "/" + self.table["submission_id"] + "/" + self.table["year"])
+      else: 
+        self.table["gisaid_virus_name"] = (self.table["gisaid_organism"] + "/" + self.table["country"] + "/" + self.table["submission_id"] + "/" + self.table["year"])
+      
+    
   def remove_nas(self):
     """This function removes rows with missing values in the required metadata columns and writes them to a file
     """
@@ -88,7 +105,7 @@ class Table:
     # remove rows with missing values in the required metadata columns
     excluded_samples = self.table[self.table[self.required_metadata].isna().any(axis=1)]
     # set the index to the sample name
-    excluded_samples.set_index("~{table_name}_id".lower(), inplace=True)
+    excluded_samples.set_index(self.table_name.lower(), inplace=True)
     # remove all optional columns so only required columns are shown
     excluded_samples = excluded_samples[excluded_samples.columns.intersection(self.required_metadata)]
     # remove all NON-NA columns so only columns with NAs remain; Shelly is a wizard and I love her 
@@ -96,9 +113,9 @@ class Table:
     # remove all rows that are required with NaNs from table
     self.table.dropna(subset=self.required_metadata, axis=0, how='any', inplace=True) 
 
-    with open(self.excluded_table_name, "a") as exclusions:
+    with open(self.exclusion_table_name, "a") as exclusions:
       exclusions.write("\nSamples excluded for missing required metadata (will have empty values in indicated columns):\n")
-    excluded_samples.to_csv(self.excluded_table_name, mode='a', sep='\t')
+    excluded_samples.to_csv(self.exclusion_table_name, mode='a', sep='\t')
     
   def perform_quality_check(self):
     """This function removes samples based on the number of VADR alerts and the number of Ns (for "sars-cov-2" only) and writes them to a file
@@ -107,24 +124,24 @@ class Table:
     for index, row in self.table.iterrows():
       if ("VADR skipped due to poor assembly") in str(row["vadr_num_alerts"]):
         notification = "VADR skipped due to poor assembly"
-        quality_exclusion = pd.concat([quality_exclusion, pd.Series({"sample_name": row["~{table_name}_id".lower()], "message": notification}).to_frame().T], ignore_index=True)
-      elif int(row["vadr_num_alerts"]) > ~{self.vadr_alert_limit}:
-        notification = "VADR number alerts too high: " + str(row["vadr_num_alerts"]) + " greater than limit of " + str(~{self.vadr_alert_limit})
-        quality_exclusion = pd.concat([quality_exclusion, pd.Series({"sample_name": row["~{table_name}_id".lower()], "message": notification}).to_frame().T], ignore_index=True)
-      elif int(row["number_n"]) > ~{self.number_n_threshold}:
-        notification="Number of Ns was too high: " + str(row["number_n"]) + " greater than limit of " + str(~{self.number_n_threshold})
-        quality_exclusion = pd.concat([quality_exclusion, pd.Series({"sample_name": row["~{table_name}_id".lower()], "message": notification}).to_frame().T], ignore_index=True)
+        quality_exclusion = pd.concat([quality_exclusion, pd.Series({"sample_name": row[self.table_name.lower()], "message": notification}).to_frame().T], ignore_index=True)
+      elif int(row["vadr_num_alerts"]) > self.vadr_alert_limit:
+        notification = "VADR number alerts too high: " + str(row["vadr_num_alerts"]) + " greater than limit of " + str(self.vadr_alert_limit)
+        quality_exclusion = pd.concat([quality_exclusion, pd.Series({"sample_name": row[self.table_name.lower()], "message": notification}).to_frame().T], ignore_index=True)
+      elif int(row["number_N"]) > self.number_n_threshold:
+        notification="Number of Ns was too high: " + str(row["number_N"]) + " greater than limit of " + str(self.number_n_threshold)
+        quality_exclusion = pd.concat([quality_exclusion, pd.Series({"sample_name": row[self.table_name.lower()], "message": notification}).to_frame().T], ignore_index=True)
       if pd.isna(row["year"]):
         notification="The collection date format was incorrect"
-        quality_exclusion = pd.concat([quality_exclusion, pd.Series({"sample_name": row["~{table_name}_id".lower()], "message": notification}).to_frame().T], ignore_index=True)
+        quality_exclusion = pd.concat([quality_exclusion, pd.Series({"sample_name": row[self.table_name.lower()], "message": notification}).to_frame().T], ignore_index=True)
 
     with open(self.exclusion_table_name, "w") as exclusions:
       exclusions.write("Samples excluded for quality thresholds:\n")
     quality_exclusion.to_csv(self.exclusion_table_name, mode='a', sep='\t', index=False)
       
     self.table.drop(self.table.index[self.table["vadr_num_alerts"].astype(str).str.contains("VADR skipped due to poor assembly")], inplace=True)
-    self.table.drop(self.table.index[self.table["vadr_num_alerts"].astype(int) > ~{self.vadr_alert_limit}], inplace=True)
-    self.table.drop(self.table.index[self.table["number_n"].astype(int) > ~{self.number_n_threshold}], inplace=True)
+    self.table.drop(self.table.index[self.table["vadr_num_alerts"].astype(int) > self.vadr_alert_limit], inplace=True)
+    self.table.drop(self.table.index[self.table["number_N"].astype(int) > self.number_n_threshold], inplace=True)
     self.table.drop(self.table.index[self.table["year"].isna()], inplace=True)
 
   def split_metadata(self):
@@ -146,6 +163,9 @@ class Table:
       self.biosample_optional, self.sra_optional, self.bankit_optional, self.gisaid_required = temp_optional_metadata[0], temp_optional_metadata[1], temp_optional_metadata[2], temp_optional_metadata[3]
 
     self.required_metadata = [item for group in temp_required_metadata for item in group]
+    self.required_metadata = self.required_metadata + [self.assembly_fasta_column_name, self.read1_column_name]
+    if not self.single_end:
+      self.required_metadata = self.required_metadata + [self.read2_column_name]
     self.optional_metadata = [item for group in temp_optional_metadata for item in group]
   
     self.logger.debug("TABLE:Metadata split!")
@@ -169,7 +189,7 @@ class Table:
       if self.organism == "sars-cov-2":
         biosample_metadata.rename(columns={"treatment" : "antiviral_treatment_agent"}, inplace=True)
       
-    biosample_metadata.to_csv(self.output_name + "_biosample_metadata.tsv", sep='\t', index=False)
+    biosample_metadata.to_csv(self.output_prefix + "_biosample_metadata.tsv", sep='\t', index=False)
     self.logger.debug("TABLE:BioSample metadata file created")
 
   def make_sra_csv(self):
@@ -192,23 +212,19 @@ class Table:
       sra_metadata.drop(["organism", "isolation_source"], axis=1, inplace=True)
 
     sra_metadata["filename"] = sra_metadata["sample_name"] + "_R1.fastq.gz"
-    #self.table[self.read1_column_name].to_csv("sra_filepaths.tsv", index=False, header=False)
     read_tuples = list(zip(self.table[self.read1_column_name], sra_metadata["filename"]))
-    #read_tuples = list(sra_metadata[self.read1_column_name, "filename"].itertuples(index=False, name=None))
     if (self.read2_column_name in self.table.columns) and (self.single_end == False):
       sra_metadata["filename2"] = sra_metadata["sample_name"] + "_R2.fastq.gz"
-   #   self.table[self.read2_column_name].to_csv("sra_filepaths.tsv", mode='a', index=False, header=False)
       read_tuples = read_tuples + list(zip(self.table[self.read2_column_name], sra_metadata["filename"]))
-   #   read_tuples = read_tuples + list(sra_metadata[self.read2_column_name, "filename2"].itertuples(index=False, name=None))
     elif (self.read2_column_name not in self.table.columns and self.single_end == False):
       self.logger.error("TABLE:Error: Paired-end data was indicated but no read2 column was found in the table")
       sys.exit(1)    
-    print(read_tuples)
-    sra_metadata.to_csv("~{output_name}_sra_metadata.tsv", sep='\t', index=False)
+
+    sra_metadata.to_csv(self.output_prefix + "_sra_metadata.tsv", sep='\t', index=False)
     
     self.logger.info("TABLE:Copying over SRA files to the indicated GCP bucket ({})".format(self.gcp_bucket_uri))
     for oldname, newname in read_tuples:
-      transfer_command = "gcloud storage -m cp " + oldname + " " + self.gcp_bucket_uri + "/" + newname
+      transfer_command = "gcloud storage cp " + oldname + " " + self.gcp_bucket_uri + "/" + newname
       self.logger.debug("TABLE:Running command: " + transfer_command)
       try:
         subprocess.run(transfer_command, shell=True, check=True)
@@ -240,13 +256,16 @@ class Table:
     # remove state column from genbank
     genbank_metadata.drop("state", axis=1, inplace=True)
     
-    self.logger.debug("TABLE:Now renaming the header of every fasta file to the preferred format")
+    genbank_metadata.to_csv(self.output_prefix + "_genbank_metadata.tsv", sep='\t', index=False)
+    self.logger.debug("TABLE:Genbank metadata file created")
     
+    
+    self.logger.debug("TABLE:Now renaming the header of every fasta file to the preferred format")
     genbank_metadata["new_filenames"] = genbank_metadata["Sequence_ID"] + "_genbank_untrimmed.fasta"
     assembly_tuples = list(zip(self.table[self.assembly_fasta_column_name], genbank_metadata["new_filenames"], genbank_metadata["Sequence_ID"]))
     
     for oldname, newname, sequence_id in assembly_tuples:
-      assembly_rename_command = "gcloud storage -m cp " + oldname + " ./" + newname
+      assembly_rename_command = "gcloud storage cp " + oldname + " ./" + newname
       self.logger.debug("TABLE:Running command: " + assembly_rename_command)
       try:
         subprocess.run(assembly_rename_command, shell=True, check=True)
@@ -261,13 +280,16 @@ class Table:
       except:
         self.logger.error("TABLE:Error: non-zero exit code when rewriting assembly header")
         sys.exit(1)
+        
+    self.logger.debug("TABLE:Concatenating Genbank  fasta files")
+    cat_command = "cat *_genbank_untrimmed.fasta > " + self.output_prefix + "_genbank_untrimmed_combined.fasta"
+    try:
+      subprocess.run(cat_command, shell=True, check=True)
+    except:
+      self.logger.error("TABLE:Error: non-zero exit code when concatenating fasta files")
+      sys.exit(1)
     
-    genbank_metadata.to_csv(self.output_name + "_genbank_metadata.tsv", sep='\t', index=False)
-    self.logger.debug("TABLE:Genbank metadata file created")
-  
-  def make_gisaid_csv(self):
-    self.logger.debug("TABLE:Creating GISAID metadata file")
-    
+    self.logger.debug("TABLE:Genbank metadata preparation complete")
     
   def make_bankit_src(self):
     self.logger.debug("TABLE:Creating bankit metadata file")
@@ -279,13 +301,16 @@ class Table:
         bankit_metadata[column] = ""
     bankit_metadata.rename(columns={"submission_id" : "Sequence_ID", "isolate" : "Isolate", "collection_date" : "Collection_date", "country" : "Country", "host" : "Host", "isolation_source" : "Isolation_source"}, inplace=True)
 
+    self.logger.debug("TABLE:Writing bankit metadata out to a file")
+    bankit_metadata.to_csv(self.output_prefix + ".src", sep='\t', index=False)
+
     self.logger.debug("TABLE:Now renaming the header of every fasta file to the preferred format")
     
     bankit_metadata["new_filenames"] = bankit_metadata["Sequence_ID"] + "_bankit.fasta"
     assembly_tuples = list(zip(self.table[self.assembly_fasta_column_name], bankit_metadata["new_filenames"], bankit_metadata["Sequence_ID"]))
     
     for oldname, newname, sequence_id in assembly_tuples:
-      assembly_rename_command = "gcloud storage -m cp " + oldname + " ./" + newname
+      assembly_rename_command = "gcloud storage cp " + oldname + " ./" + newname
       self.logger.debug("TABLE:Running command: " + assembly_rename_command)
       try:
         subprocess.run(assembly_rename_command, shell=True, check=True)
@@ -301,12 +326,112 @@ class Table:
         self.logger.error("TABLE:Error: non-zero exit code when rewriting assembly header")
         sys.exit(1)
     
-    bankit_metadata.to_csv(self.output_name + ".src", sep='\t', index=False)
-    self.logger.debug("TABLE:Genbank metadata file created")    
+    self.logger.debug("TABLE:Concatenating bankit fasta files")
+    cat_command = "cat *_bankit.fasta > " + self.output_prefix + "_bankit_combined.fasta"
+    try:
+      subprocess.run(cat_command, shell=True, check=True)
+    except:
+      self.logger.error("TABLE:Error: non-zero exit code when concatenating fasta files")
+      sys.exit(1)
+      
+    self.logger.debug("TABLE:Bankit metadata preparation complete")    
+ 
+  def make_gisaid_csv(self):
+    self.logger.debug("TABLE:Creating GISAID metadata file")
+    gisaid_metadata = self.table[self.gisaid_required].copy()
     
+    for column in self.gisaid_optional:
+      if column in self.table.columns:
+        gisaid_metadata[column] = self.table[column]
+      else:
+        gisaid_metadata[column] = ""
+    
+    if self.usa_territory:
+      gisaid_metadata["org_location"] = (gisaid_metadata["continent"] + " / " + gisaid_metadata["state"]) 
+    else:
+      gisaid_metadata["org_location"] = (gisaid_metadata["continent"] + " / " + gisaid_metadata["country"] + " / " + gisaid_metadata["state"]) 
+    
+    if self.skip_county:
+      self.logger.debug("TABLE:Not adding county information to `covv_location`")
+    else:
+      self.logger.debug("TABLE:Adding county information to `covv_location`")
+      gisaid_metadata["county"] = gisaid_metadata["county"].fillna("")
+      gisaid_metadata["org_location"] = gisaid_metadata.apply(lambda x: x["org_location"] + " / " + x["county"] if len(x["county"]) > 0 else x["org_location"], axis=1)
+
+    
+    if self.organism == "sars-cov-2":     
+      # add additional sc2-specific columns & any empty ones GISAID wants
+      gisaid_metadata["covv_type"] = "betacoronavirus"
+      gisaid_metadata["covv_passage"] = "original"
+      gisaid_metadata["covv_subm_sample_id"] = ""
+      gisaid_metadata["covv_provider_sample_id"] = ""
+      gisaid_metadata["covv_add_location"] = ""
+      
+      # make dictionary for renaming headers
+      # format: {original : new} or {metadata_formatter : gisaid_format}
+      gisaid_rename_headers = {"gisaid_virus_name" : "covv_virus_name", "org_location" : "covv_location", "additional_host_information" : "covv_add_host_info", "gisaid_submitter" : "submitter", "collection_date" : "covv_collection_date", "seq_platform" : "covv_seq_technology", "host" : "covv_host", "assembly_method" : "covv_assembly_method", self.assembly_mean_coverage_column_name : "covv_coverage", "collecting_lab" : "covv_orig_lab", "collecting_lab_address" : "covv_orig_lab_addr", "submitting_lab" : "covv_subm_lab", "submitting_lab_address" : "covv_subm_lab_addr", "authors" : "covv_authors", "purpose_of_sequencing" : "covv_sampling_strategy", "patient_gender" : "covv_gender", "patient_age" : "covv_patient_age", "patient_status" : "covv_patient_status", "specimen_source" : "covv_specimen", "outbreak" : "covv_outbreak", "last_vaccinated" : "covv_last_vaccinated", "treatment" : "covv_treatment", "consortium" : "covv_consortium"}
+      
+    elif self.organism == "mpox":
+      # add additional mpox-specific columns
+      gisaid_metadata["pox_passage"] = "original"
+      
+      # make dictionary for renaming headers
+      # format: {original : new} or {metadata_formatter : gisaid_format}
+      gisaid_rename_headers = {"gisaid_virus_name" : "pox_virus_name", "org_location" : "pox_location", "gisaid_submitter" : "submitter", "passage_details" : "pox_passage", "collection_date" : "pox_collection_date", "seq_platform" : "pox_seq_technology", "host" : "pox_host", "assembly_method" : "pox_assembly_method", self.assembly_mean_coverage_column_name : "pox_coverage", "collecting_lab" : "pox_orig_lab", "collecting_lab_address" : "pox_orig_lab_addr", "submitting_lab" : "pos_subm_lab", "submitting_lab_address" : "pox_subm_lab_addr", "authors" : "pox_authors", "purpose_of_sequencing" : "pox_sampling_strategy", "patient_gender" : "pox_gender", "patient_age" : "pox_patient_age", "patient_status" : "pox_patient_status", "specimen_source" : "pox_specimen_source", "outbreak" : "pox_outbreak", "last_vaccinated" : "pox_last_vaccinated", "treatment" : "pox_treatment"}
+
+    gisaid_metadata.drop(["continent", "country", "state", "county"], axis=1, inplace=True)
+
+    # replace any empty/NA values for age, status, and gender with "unknown"
+    # regex expression '^\s*$' searches for blank strings
+    gisaid_metadata["patient_age"] = gisaid_metadata["patient_age"].replace(r'^\s*$', "unknown", regex=True)
+    gisaid_metadata["patient_age"] = gisaid_metadata["patient_age"].fillna("unknown")
+    gisaid_metadata["patient_gender"] = gisaid_metadata["patient_gender"].replace(r'^\s*$', "unknown", regex=True)
+    gisaid_metadata["patient_gender"] = gisaid_metadata["patient_gender"].fillna("unknown")
+    gisaid_metadata["patient_status"] = gisaid_metadata["patient_status"].replace(r'^\s*$', "unknown", regex=True)
+    gisaid_metadata["patient_status"] = gisaid_metadata["patient_status"].fillna("unknown")
+        
+ 
+    self.logger.debug("TABLE:Now preparing the command to rewrite the header of every fasta file to the preferred format")
+    gisaid_metadata["new_filenames"] = gisaid_metadata["submission_id"] + "_gisaid.fasta"
+    assembly_tuples = list(zip(self.table[self.assembly_fasta_column_name], gisaid_metadata["new_filenames"], gisaid_metadata["gisaid_virus_name"]))
+    
+    gisaid_metadata.drop(["submission_id", "new_filenames"], axis=1, inplace=True)
+
+    self.logger.debug("TABLE:Writing GISAID metadata out to a file")
+    gisaid_metadata.rename(columns=gisaid_rename_headers, inplace=True)
+    gisaid_metadata.to_csv(self.output_prefix + "_gisaid_metadata.csv", sep=',', index=False)  
+    
+    for oldname, newname, virus_name in assembly_tuples:
+      assembly_rename_command = "gcloud storage cp " + oldname + " ./" + newname
+      self.logger.debug("TABLE:Running command: " + assembly_rename_command)
+      try:
+        subprocess.run(assembly_rename_command, shell=True, check=True)
+      except:
+        self.logger.error("TABLE:Error: non-zero exit code when copying files to working directory")
+        sys.exit(1)
+      
+      sed_command = "sed -i '1s|.*|>" + virus_name + "|' " + newname
+      self.logger.debug("TABLE:Running command: " + sed_command)
+      try:
+        subprocess.run(sed_command, shell=True, check=True)
+      except:
+        self.logger.error("TABLE:Error: non-zero exit code when rewriting assembly header")
+        sys.exit(1)
+    
+    self.logger.debug("TABLE:Concatenating GISAID fasta files")
+    cat_command = "cat *_gisaid.fasta > " + self.output_prefix + "_gisaid_combined.fasta"
+    try:
+      subprocess.run(cat_command, shell=True, check=True)
+    except:
+      self.logger.error("TABLE:Error: non-zero exit code when concatenating fasta files")
+      sys.exit(1)
+    
+    self.logger.debug("TABLE:GISAID metadata preparation complete")
+
   def process_table(self):
     self.split_metadata()
     self.extract_samples()
+    self.create_standard_variables()
     self.perform_quality_check()
     self.remove_nas()
     
@@ -314,7 +439,6 @@ class Table:
       self.logger.error("TABLE:ENDING PROCESS! No samples were found in the table after extraction and cleaning. Check the input table and/or the excluded samples table and try again.")
       sys.exit(1)
     
-    self.create_standard_variables()
     
     self.logger.debug("TABLE:Now creating metadata files")
     if not self.skip_ncbi:
@@ -335,9 +459,5 @@ class Table:
     
     self.logger.debug("TABLE:Metadata tables made")
     
-      
-    
-    
-    return self.table
     
     

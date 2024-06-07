@@ -1,5 +1,5 @@
-import mercury.Table as Table
-import mercury.Metadata as Metadata
+from Table import Table
+from Metadata import Metadata
 import logging
 import subprocess
 import sys
@@ -74,10 +74,11 @@ class Runner:
     
     self.logger.debug("RUNNER:Gathering metadata")
     
-    metadata = Metadata(self.logger, self.organism, self.skip_ncbi, self.read1_column_name, self.read2_column_name, self.assembly_fasta_column_name, self.assembly_mean_coverage_column_name)
+    metadata = Metadata(self.logger, self.organism, self.skip_ncbi, self.assembly_mean_coverage_column_name)
     metadata_list = metadata.get_metadata()      
     
     self.logger.debug("RUNNER:Processing table")
-    table = Table(self.logger, self.organism, self.input_table, self.table_name, self.samplenames, self.skip_county, self.skip_ncbi, self.usa_territory, metadata_list, self.vadr_alert_limit, self.number_n_threshold, self.output_name, self.gcp_bucket_uri, self.single_end)
+    table = Table(self.logger, self.organism, self.input_table, self.table_name, self.samplenames, self.skip_county, self.skip_ncbi, self.usa_territory, metadata_list, self.vadr_alert_limit, self.number_n_threshold, self.assembly_fasta_column_name, self.output_prefix, self.gcp_bucket_uri, self.single_end, self.read1_column_name, self.assembly_mean_coverage_column_name, self.read2_column_name)
     table.process_table()
-        
+      
+    self.logger.info("RUNNER:Done!")
