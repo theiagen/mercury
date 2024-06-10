@@ -15,7 +15,7 @@ class Table:
     
     self.organism = organism
     self.input_table = input_table
-    self.table_name = table_name + "_id"
+    self.table_name = table_name
     self.samplenames = samplenames
     self.skip_county = skip_county
     self.skip_ncbi = skip_ncbi
@@ -236,7 +236,7 @@ class Table:
     self.logger.debug("TABLE:SRA metadata file created and data transferred")
     
   def make_genbank_csv(self):
-    self.logger.debug("TABLE:Creating Genbank metadata file")
+    self.logger.debug("TABLE:Creating GenBank metadata file")
     genbank_metadata = self.table[self.genbank_required].copy()
     
     update_country = False
@@ -257,7 +257,7 @@ class Table:
     genbank_metadata.drop("state", axis=1, inplace=True)
     
     genbank_metadata.to_csv(self.output_prefix + "_genbank_metadata.tsv", sep='\t', index=False)
-    self.logger.debug("TABLE:Genbank metadata file created")
+    self.logger.debug("TABLE:GenBank metadata file created")
     
     
     self.logger.debug("TABLE:Now renaming the header of every fasta file to the preferred format")
@@ -281,7 +281,7 @@ class Table:
         self.logger.error("TABLE:Error: non-zero exit code when rewriting assembly header")
         sys.exit(1)
         
-    self.logger.debug("TABLE:Concatenating Genbank  fasta files")
+    self.logger.debug("TABLE:Concatenating GenBank  fasta files")
     cat_command = "cat *_genbank_untrimmed.fasta > " + self.output_prefix + "_genbank_untrimmed_combined.fasta"
     try:
       subprocess.run(cat_command, shell=True, check=True)
@@ -289,10 +289,10 @@ class Table:
       self.logger.error("TABLE:Error: non-zero exit code when concatenating fasta files")
       sys.exit(1)
     
-    self.logger.debug("TABLE:Genbank metadata preparation complete")
+    self.logger.debug("TABLE:GenBank metadata preparation complete")
     
   def make_bankit_src(self):
-    self.logger.debug("TABLE:Creating bankit metadata file")
+    self.logger.debug("TABLE:Creating BankIt metadata file")
     bankit_metadata = self.table[self.bankit_required].copy()
     for column in self.bankit_optional:
       if column in self.table.columns:
@@ -301,7 +301,7 @@ class Table:
         bankit_metadata[column] = ""
     bankit_metadata.rename(columns={"submission_id" : "Sequence_ID", "isolate" : "Isolate", "collection_date" : "Collection_date", "country" : "Country", "host" : "Host", "isolation_source" : "Isolation_source"}, inplace=True)
 
-    self.logger.debug("TABLE:Writing bankit metadata out to a file")
+    self.logger.debug("TABLE:Writing BankIt metadata out to a file")
     bankit_metadata.to_csv(self.output_prefix + ".src", sep='\t', index=False)
 
     self.logger.debug("TABLE:Now renaming the header of every fasta file to the preferred format")
@@ -326,7 +326,7 @@ class Table:
         self.logger.error("TABLE:Error: non-zero exit code when rewriting assembly header")
         sys.exit(1)
     
-    self.logger.debug("TABLE:Concatenating bankit fasta files")
+    self.logger.debug("TABLE:Concatenating BankIt fasta files")
     cat_command = "cat *_bankit.fasta > " + self.output_prefix + "_bankit_combined.fasta"
     try:
       subprocess.run(cat_command, shell=True, check=True)
@@ -334,7 +334,7 @@ class Table:
       self.logger.error("TABLE:Error: non-zero exit code when concatenating fasta files")
       sys.exit(1)
       
-    self.logger.debug("TABLE:Bankit metadata preparation complete")    
+    self.logger.debug("TABLE:BankIt metadata preparation complete")    
  
   def make_gisaid_csv(self):
     self.logger.debug("TABLE:Creating GISAID metadata file")
@@ -352,9 +352,9 @@ class Table:
       gisaid_metadata["org_location"] = (gisaid_metadata["continent"] + " / " + gisaid_metadata["country"] + " / " + gisaid_metadata["state"]) 
     
     if self.skip_county:
-      self.logger.debug("TABLE:Not adding county information to `covv_location`")
+      self.logger.debug("TABLE:Not adding county information to `org_location`")
     else:
-      self.logger.debug("TABLE:Adding county information to `covv_location`")
+      self.logger.debug("TABLE:Adding county information to `org_location`")
       gisaid_metadata["county"] = gisaid_metadata["county"].fillna("")
       gisaid_metadata["org_location"] = gisaid_metadata.apply(lambda x: x["org_location"] + " / " + x["county"] if len(x["county"]) > 0 else x["org_location"], axis=1)
 

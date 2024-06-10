@@ -62,7 +62,7 @@ class Runner:
     if result.returncode != 0:
       self.logger.error("RUNNER:Error: gcloud storage cp command not found")
       sys.exit(1)
-    self.logger.info("RUNNER:Found `gcloud storage cp` command, continuing")
+    self.logger.debug("RUNNER:Found `gcloud storage cp` command, continuing")
 
   def run(self):
     """

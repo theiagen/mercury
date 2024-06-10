@@ -9,7 +9,7 @@ def main():
     prog = "mercury",
     description = "Mercury prepares and formats metadata for submission to national & international genomic databases",
     usage = "python3 /mercury/mercury/mercury.py <input_table.tsv> <table_name> <samplenames> [<args>]",
-    epilog = "Please contact support@theiagen.com with any questions",
+    epilog = "Please contact support@theiagen.com or sage.wright@theiagen.com with any questions",
     formatter_class = lambda prog: argparse.RawTextHelpFormatter(prog, max_help_position=10)
   )
   parser.add_argument("-v", "--version", action="version", version=str(__VERSION__))
@@ -17,7 +17,7 @@ def main():
   parser.add_argument("input_table",
                       help="The table containing the metadata for the samples to be submitted", type=CheckInputs.is_table_valid)
   parser.add_argument("table_name",
-                      help="The name of the first column in the table (A1)", type=str)
+                      help="The name of the first column in the table (A1); include the `_id` if data table is downloaded from Terra.bio", type=str)
   parser.add_argument("samplenames",
                       help="The sample names to be extracted from the table", type=CheckInputs.is_comma_delimited_list)
   parser.add_argument("-o", "--output_prefix",
@@ -31,7 +31,7 @@ def main():
   submission_type_arguments.add_argument("--skip_ncbi", 
                                          help="Add to skip NCBI metadata preparation; prep only for GISAID submission", action="store_true", default=False)
   
-  customization_arguments = parser.add_argument_group("submission customization arguments", "options that customize the submission")
+  customization_arguments = parser.add_argument_group("metadata customization arguments", "options that customize the metadata configuration")
   customization_arguments.add_argument("--skip_county",
                                        help="Add to skip adding county to location in GISAID metadata", action="store_true", default=False)
   customization_arguments.add_argument("--usa_territory",
@@ -43,7 +43,7 @@ def main():
   customization_arguments.add_argument("--single_end",
                                       help="Add if the data is single-end", action="store_true", default=False)
   
-  qc_arguments = parser.add_argument_group("quality control arguments", "options that control quality thresholds")
+  qc_arguments = parser.add_argument_group("quality control arguments", "options that control quality thresholds (currently only for SARS-CoV-2 samples)")
   qc_arguments.add_argument("-a", "--vadr_alert_limit",
                             help="The maximum number of VADR alerts allowed for SARS-CoV-2 samples\ndefault=0", default=0, metavar="\b", type=int)
   qc_arguments.add_argument("-n", "--number_n_threshold",
