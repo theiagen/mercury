@@ -4,6 +4,8 @@
 
 Mercury prepares and formats metadata and sequencing files **located in GCP buckets** for submission to national & international databases, currently NCBI & GISAID. The default organism (set with `--organism`) is `"sars-cov-2"` although `"mpox"` and `"flu"` are also accepted.
 
+Important note: Mercury was designed to work with metadata tables that were processed after running the TheiaCoV workflows. If you are using a different pipeline, please ensure that the metadata table is formatted correctly.
+
 For all organisms:
 
 1. Required & optional metadata fields are retrieved from the `Metadata.py` file, dependent on the optional `--organism` and `--skip_ncbi` arguments.
