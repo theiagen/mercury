@@ -33,10 +33,10 @@ docker pull us-docker.pkg.dev/general-theiagen/theiagen/mercury:0.0.1
 The entrypoint for this Docker image is the Mercury help message. To run this container interactively, use the following command:
 
 ```bash
-docker run -it --entrypoint=/bin/bash us-docker.pkg.dev/general-theiagen/theiagen/mercury:0.0.1
+docker run -it --entrypoint=/bin/bash us-docker.pkg.dev/general-theiagen/theiagen/mercury:1.0.0
 # Once inside the container interactively, you can run the tbp-parser tool
 python3 /mercury/mercury/mercury.py -v
-# v0.0.1
+# v1.0.0
 ```
 
 ### Locally with Python
