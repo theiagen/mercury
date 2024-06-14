@@ -48,6 +48,17 @@ Mercury is not yet available with `pip` or `conda`. To run Mercury in your local
 - Google Cloud SDK 479.0.0+ and all its dependencies
 - numpy >= 1.22.4
 
+## Outputs
+
+Each organism will produce different output files. See the table below:
+
+| | `<output_name>_bankit_combined.fasta` | `<output_name>.src` | `<output_name>_biosample_metadata.tsv` |`<output_name>_genbank_metadata.tsv` | `<output_name>_genbank_combined.fasta` |`<output_name>_gisaid_metadata.csv` | `<output_name>_gisaid_combined.fasta` |  `<output_name>_sra_metadata.tsv` | `<output_name>_excluded_samples.tsv` |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | -- |
+| organism | BankIt | BankIt | BioSample | GenBank | GenBank | GISAID | GISAID | SRA | N/A |
+| `"mpox"` | &check; | &check; | &check; |  |  | &check; | &check; | &check; | &check; |
+| `"sars-cov-2"` | | | &check; | &check; | &check; | &check; | &check; | &check; | &check; |
+| `"flu"` | | | &check; |  |  | | | &check; | &check; |
+
 ## Explanation of Arguments
 
 ### Usage & Help Message
