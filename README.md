@@ -27,7 +27,7 @@ Default databases by organism:
 We highly recommend using the following Docker image to run Mercury:
 
 ```bash
-docker pull us-docker.pkg.dev/general-theiagen/theiagen/mercury:0.0.1
+docker pull us-docker.pkg.dev/general-theiagen/theiagen/mercury:1.0.0
 ```
 
 The entrypoint for this Docker image is the Mercury help message. To run this container interactively, use the following command:
