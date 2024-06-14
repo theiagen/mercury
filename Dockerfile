@@ -33,12 +33,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # copying scripts dir to `/scripts` for consistency
 # make all scripts within /scripts exectuable to all users
 RUN git clone https://github.com/broadinstitute/terra-tools.git && \
- mkdir /scripts &&
+ mkdir /scripts && \
  cp -vr /terra-tools/scripts/* /scripts && \
  chmod +x /scripts/*
 
 # we are installing updated versions of each of the following via pip3/pypi:
-RUN pip3 install firecloud \
+RUN pip3 install --break-system-packages firecloud \
 google-auth-httplib2 \
 gcs-oauth2-boto-plugin \
 google-api-python-client \
@@ -50,12 +50,9 @@ numpy
 ENV LC_ALL=C
 
 # copy in all of the tb-profiler-parsing code
-#RUN wget https://github.com/theiagen/mercury/archive/refs/tags/v${MERCURY_VER}.tar.gz && \
-#    tar -xzvf v${MERCURY_VER}.tar.gz && \
-#    mv -v mercury-${MERCURY_VER} /mercury
-
-COPY . /mercury
-
+RUN wget https://github.com/theiagen/mercury/archive/refs/tags/v${MERCURY_VER}.tar.gz && \
+   tar -xzvf v${MERCURY_VER}.tar.gz && \
+   mv -v mercury-${MERCURY_VER} /mercury
 
 # final working directory is /data
 WORKDIR /data
