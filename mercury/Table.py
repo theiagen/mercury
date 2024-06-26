@@ -63,7 +63,7 @@ class Table:
     self.logger.debug("TABLE:Extracting samples from table")
     working_table = self.table[self.table[self.table_name].isin(self.samplenames)]
     working_table.columns = working_table.columns.str.lower()
-    return working_table
+    self.table = working_table
     
   def create_standard_variables(self):
     """This function creates standard variables in the table
