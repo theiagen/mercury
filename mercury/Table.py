@@ -128,8 +128,8 @@ class Table:
       elif int(row["vadr_num_alerts"]) > self.vadr_alert_limit:
         notification = "VADR number alerts too high: " + str(row["vadr_num_alerts"]) + " greater than limit of " + str(self.vadr_alert_limit)
         quality_exclusion = pd.concat([quality_exclusion, pd.Series({"sample_name": row[self.table_name.lower()], "message": notification}).to_frame().T], ignore_index=True)
-      elif int(row["number_N"]) > self.number_n_threshold:
-        notification="Number of Ns was too high: " + str(row["number_N"]) + " greater than limit of " + str(self.number_n_threshold)
+      elif int(row["number_n"]) > self.number_n_threshold:
+        notification="Number of Ns was too high: " + str(row["number_n"]) + " greater than limit of " + str(self.number_n_threshold)
         quality_exclusion = pd.concat([quality_exclusion, pd.Series({"sample_name": row[self.table_name.lower()], "message": notification}).to_frame().T], ignore_index=True)
       if pd.isna(row["year"]):
         notification="The collection date format was incorrect"
