@@ -40,8 +40,14 @@ class Metadata:
     
   def sra_metadata(self):
     self.logger.debug("METADATA:Retrieving SRA metadata")
-    sra_required = ["bioproject_accession", "submission_id", "library_id", "organism", "isolation_source", "library_strategy", "library_source", "library_selection", "library_layout", "seq_platform", "instrument_model", "filetype"]
-    sra_optional = ["platform", "title", "design_description", "amplicon_primer_scheme", "amplicon_size", "assembly_method", "dehosting_method", "submitter_email"]
+    sra_required = ["bioproject_accession", "submission_id", "library_id", "organism", "isolation_source", "library_strategy", "library_source", "library_selection", "library_layout", "instrument_model", "filetype"]
+    sra_optional = ["title", "design_description", "amplicon_primer_scheme", "amplicon_size", "assembly_method", "dehosting_method", "submitter_email"]
+    
+    # note: the flu metadata formatter currently uses "platform" instead of "seq_platform" because it uses the Terra_2_NCBI Pathogen BioSample formatter.
+    if self.organism == "flu":
+      sra_required.append("platform")
+    else:
+      sra_required.append("seq_platform")
     return sra_required, sra_optional
 
   def genbank_metadata(self):  

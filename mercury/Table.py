@@ -141,7 +141,7 @@ class Table:
       
     self.table.drop(self.table.index[self.table["vadr_num_alerts"].astype(str).str.contains("VADR skipped due to poor assembly")], inplace=True)
     self.table.drop(self.table.index[self.table["vadr_num_alerts"].astype(int) > self.vadr_alert_limit], inplace=True)
-    self.table.drop(self.table.index[self.table["number_N"].astype(int) > self.number_n_threshold], inplace=True)
+    self.table.drop(self.table.index[self.table["number_n"].astype(int) > self.number_n_threshold], inplace=True)
     self.table.drop(self.table.index[self.table["year"].isna()], inplace=True)
 
   def split_metadata(self):
@@ -248,10 +248,10 @@ class Table:
       else:
         genbank_metadata[column] = ""
     
-    genbank_metadata.rename(columns={"submission_id" : "Sequence_ID", "host_sci_name" : "host", "collection_date" : "collection-date", "isolation_source" : "isolation-source", "biosample_accession" : "BioSample", "bioproject_accession" : "BioProject"}, inplace=True)
+    genbank_metadata.rename(columns={"submission_id" : "Sequence_ID", "host_sci_name" : "host", "collection_date" : "collection-date", "isolation_source" : "isolation-source", "biosample_accession" : "BioSample", "bioproject_accession" : "BioProject", "country" : "geo_loc_name"}, inplace=True)
   
     if update_country:
-      genbank_metadata["country"] = genbank_metadata["country"] + ": " + genbank_metadata["state"]
+      genbank_metadata["geo_loc_name"] = genbank_metadata["geo_loc_name"] + ": " + genbank_metadata["state"]
       
     # remove state column from genbank
     genbank_metadata.drop("state", axis=1, inplace=True)
@@ -392,10 +392,10 @@ class Table:
         
  
     self.logger.debug("TABLE:Now preparing the command to rewrite the header of every fasta file to the preferred format")
-    gisaid_metadata["new_filenames"] = gisaid_metadata["submission_id"] + "_gisaid.fasta"
-    assembly_tuples = list(zip(self.table[self.assembly_fasta_column_name], gisaid_metadata["new_filenames"], gisaid_metadata["gisaid_virus_name"]))
+    gisaid_metadata["fn"] = gisaid_metadata["submission_id"] + "_gisaid.fasta"
+    assembly_tuples = list(zip(self.table[self.assembly_fasta_column_name], gisaid_metadata["fn"], gisaid_metadata["gisaid_virus_name"]))
     
-    gisaid_metadata.drop(["submission_id", "new_filenames"], axis=1, inplace=True)
+    gisaid_metadata.drop(["submission_id"], axis=1, inplace=True)
 
     self.logger.debug("TABLE:Writing GISAID metadata out to a file")
     gisaid_metadata.rename(columns=gisaid_rename_headers, inplace=True)
