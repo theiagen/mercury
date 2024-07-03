@@ -200,9 +200,7 @@ class Table:
         sra_metadata[column] = self.table[column]
       else:
         sra_metadata[column] = ""
-    
-    sra_metadata["biosample_accession"] = "{populate with BioSample accession}"
-    
+        
     sra_metadata.rename(columns={"submission_id" : "sample_name", "library_id" : "library_ID"}, inplace=True)
   
     if self.organism != "flu":
