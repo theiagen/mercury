@@ -213,7 +213,7 @@ class Table:
     read_tuples = list(zip(self.table[self.read1_column_name], sra_metadata["filename"]))
     if (self.read2_column_name in self.table.columns) and (self.single_end == False):
       sra_metadata["filename2"] = sra_metadata["sample_name"] + "_R2.fastq.gz"
-      read_tuples = read_tuples + list(zip(self.table[self.read2_column_name], sra_metadata["filename"]))
+      read_tuples = read_tuples + list(zip(self.table[self.read2_column_name], sra_metadata["filename2"]))
     elif (self.read2_column_name not in self.table.columns and self.single_end == False):
       self.logger.error("TABLE:Error: Paired-end data was indicated but no read2 column was found in the table")
       sys.exit(1)    
