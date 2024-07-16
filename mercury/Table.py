@@ -86,7 +86,7 @@ class Table:
     
     if self.organism == "sars-cov-2":
       self.table["gisaid_organism"] = "hCoV-19"
-    elif self.organsim == "mpox":
+    elif self.organism == "mpox":
       self.table["gisaid_organism"] = "mpx/A"
 
     if self.organism != "flu":
