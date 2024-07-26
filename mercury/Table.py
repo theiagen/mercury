@@ -194,8 +194,8 @@ class Table:
       biosample_metadata.rename(columns={"collecting_lab" : "collected_by", "host_sci_name" : "host", "patient_gender" : "host_sex", "patient_age" : "host_age"}, inplace=True)      
       if self.organism == "sars-cov-2":
         biosample_metadata.rename(columns={"treatment" : "antiviral_treatment_agent"}, inplace=True)
+    # Flu only: when user does not supply isolate or strain metadata columns, create "isolate" column using the syntax below
     elif self.organism == "flu" and user_supplied_isolate_or_strain == False :
-      # make isolate column using this syntax:
       # type/state/submission_id/year (subtype)
       # strip off "Type_" from beginning of Type, e.g. "Type_A" -> "A"
       self.logger.debug("DEBUG:User did not supply isolate or strain metadata columns, creating isolate column for Flu samples now...")
