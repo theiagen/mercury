@@ -179,6 +179,12 @@ class Table:
       else:
         biosample_metadata[column] = ""
     
+    # if either "isolate" or "strain" columns do not exist in input terra table, then set a boolean variable "user_supplied_isolate_or_strain" to False; otherwise set to True
+    if "isolate" not in self.table.columns and "strain" not in self.table.columns:
+      user_supplied_isolate_or_strain = False
+    else:
+      user_supplied_isolate_or_strain = True
+
     biosample_metadata.rename(columns={"submission_id" : "sample_name"}, inplace=True)
     
     if self.organism == "mpox" or self.organism == "sars-cov-2":
@@ -188,7 +194,15 @@ class Table:
       biosample_metadata.rename(columns={"collecting_lab" : "collected_by", "host_sci_name" : "host", "patient_gender" : "host_sex", "patient_age" : "host_age"}, inplace=True)      
       if self.organism == "sars-cov-2":
         biosample_metadata.rename(columns={"treatment" : "antiviral_treatment_agent"}, inplace=True)
-      
+    # Flu only: when user does not supply isolate or strain metadata columns, create "isolate" column using the syntax below
+    elif self.organism == "flu" and user_supplied_isolate_or_strain == False :
+      # type/state/submission_id/year (subtype)
+      # strip off "Type_" from beginning of Type, e.g. "Type_A" -> "A"
+      self.logger.debug("DEBUG:User did not supply isolate or strain metadata columns, creating isolate column for Flu samples now...")
+      biosample_metadata["isolate"] = (biosample_metadata["abricate_flu_type"].str.replace("Type_","") + "/" + biosample_metadata["state"] + "/" + biosample_metadata["sample_name"] + "/" + biosample_metadata["year"] + " (" + biosample_metadata["abricate_flu_subtype"] + ")")
+    # Remove 4 extra columns from the output table prior to creating TSV file (these are simply used to create the isolate column)
+    biosample_metadata.drop(["abricate_flu_type", "abricate_flu_subtype", "year", "state"], axis=1, inplace=True)
+
     biosample_metadata.to_csv(self.output_prefix + "_biosample_metadata.tsv", sep='\t', index=False)
     self.logger.debug("TABLE:BioSample metadata file created")
 
