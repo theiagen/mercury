@@ -200,8 +200,9 @@ class Table:
       # strip off "Type_" from beginning of Type, e.g. "Type_A" -> "A"
       self.logger.debug("DEBUG:User did not supply isolate or strain metadata columns, creating isolate column for Flu samples now...")
       biosample_metadata["isolate"] = (biosample_metadata["abricate_flu_type"].str.replace("Type_","") + "/" + biosample_metadata["state"] + "/" + biosample_metadata["sample_name"] + "/" + biosample_metadata["year"] + " (" + biosample_metadata["abricate_flu_subtype"] + ")")
-    # Remove 4 extra columns from the output table prior to creating TSV file (these are simply used to create the isolate column)
-    biosample_metadata.drop(["abricate_flu_type", "abricate_flu_subtype", "year", "state"], axis=1, inplace=True)
+      
+      # Remove 4 extra columns from the output table prior to creating TSV file (these are simply used to create the isolate column)
+      biosample_metadata.drop(["abricate_flu_type", "abricate_flu_subtype", "year", "state"], axis=1, inplace=True)
 
     biosample_metadata.to_csv(self.output_prefix + "_biosample_metadata.tsv", sep='\t', index=False)
     self.logger.debug("TABLE:BioSample metadata file created")
