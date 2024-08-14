@@ -34,7 +34,7 @@ The entrypoint for this Docker image is the Mercury help message. To run this co
 
 ```bash
 docker run -it --entrypoint=/bin/bash us-docker.pkg.dev/general-theiagen/theiagen/mercury:1.0.7
-# Once inside the container interactively, you can run the tbp-parser tool
+# Once inside the container interactively, you can run the mercury tool
 python3 /mercury/mercury/mercury.py -v
 # v1.0.7
 ```
