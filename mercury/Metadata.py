@@ -59,6 +59,8 @@ class Metadata:
     """This function retrieves the metadata requirements for the organism
     """
     self.logger.debug("METADATA:Retrieving metadata requirements")
+    required_metadata = []
+    optional_metadata = []
     if not self.skip_ncbi:
       self.logger.debug("METADATA:NCBI submission is not skipping, retrieving NCIB-specific metadata requirements for " + self.organism)
       if self.organism == "sars-cov-2":
