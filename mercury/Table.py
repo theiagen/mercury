@@ -149,23 +149,30 @@ class Table:
     
     temp_required_metadata = self.metadata_list[0]
     temp_optional_metadata = self.metadata_list[1]
-    
-    if self.organism == "sars-cov-2":
-      self.biosample_required, self.sra_required, self.genbank_required, self.gisaid_required = temp_required_metadata[0], temp_required_metadata[1], temp_required_metadata[2], temp_required_metadata[3]
-      self.biosample_optional, self.sra_optional, self.genbank_optional, self.gisaid_optional = temp_optional_metadata[0], temp_optional_metadata[1], temp_optional_metadata[2], temp_optional_metadata[3]
+    if self.skip_ncbi:
+      self.logger.debug("TABLE:Skipping NCBI submission, removing NCBI-specific metadata requirements")
+      self.gisaid_required, self.gisaid_optional = temp_required_metadata[0], temp_optional_metadata[0]
+    else:
+      self.logger.debug("TABLE:NCBI submission not skipped, keeping NCBI-specific metadata requirements")
+      if self.organism == "sars-cov-2":
+        self.biosample_required, self.sra_required, self.genbank_required, self.gisaid_required = temp_required_metadata[0], temp_required_metadata[1], temp_required_metadata[2], temp_required_metadata[3]
+        self.biosample_optional, self.sra_optional, self.genbank_optional, self.gisaid_optional = temp_optional_metadata[0], temp_optional_metadata[1], temp_optional_metadata[2], temp_optional_metadata[3]
+        
+      elif self.organism == "flu":
+        self.biosample_required, self.sra_required = temp_required_metadata[0], temp_required_metadata[1]
+        self.biosample_optional, self.sra_optional = temp_optional_metadata[0], temp_optional_metadata[1]
       
-    elif self.organism == "flu":
-      self.biosample_required, self.sra_required = temp_required_metadata[0], temp_required_metadata[1]
-      self.biosample_optional, self.sra_optional = temp_optional_metadata[0], temp_optional_metadata[1]
-    
-    elif self.organism == "mpox":
-      self.biosample_required, self.sra_required, self.bankit_required, self.gisaid_required = temp_required_metadata[0], temp_required_metadata[1], temp_required_metadata[2], temp_required_metadata[3]
-      self.biosample_optional, self.sra_optional, self.bankit_optional, self.gisaid_required = temp_optional_metadata[0], temp_optional_metadata[1], temp_optional_metadata[2], temp_optional_metadata[3]
+      elif self.organism == "mpox":
+        self.biosample_required, self.sra_required, self.bankit_required, self.gisaid_required = temp_required_metadata[0], temp_required_metadata[1], temp_required_metadata[2], temp_required_metadata[3]
+        self.biosample_optional, self.sra_optional, self.bankit_optional, self.gisaid_required = temp_optional_metadata[0], temp_optional_metadata[1], temp_optional_metadata[2], temp_optional_metadata[3]
 
     self.required_metadata = [item for group in temp_required_metadata for item in group]
-    self.required_metadata = self.required_metadata + [self.assembly_fasta_column_name, self.read1_column_name]
-    if not self.single_end:
-      self.required_metadata = self.required_metadata + [self.read2_column_name]
+    if self.skip_ncbi:
+      self.required_metadata = self.required_metadata + [self.assembly_fasta_column_name]
+    else:
+      self.required_metadata = self.required_metadata + [self.assembly_fasta_column_name, self.read1_column_name]
+      if not self.single_end:
+        self.required_metadata = self.required_metadata + [self.read2_column_name]
     self.optional_metadata = [item for group in temp_optional_metadata for item in group]
   
     self.logger.debug("TABLE:Metadata split!")
