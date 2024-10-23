@@ -248,13 +248,21 @@ class Table:
     
     self.logger.info("TABLE:Copying over SRA files to the indicated GCP bucket ({})".format(self.gcp_bucket_uri))
     for oldname, newname in read_tuples:
-      transfer_command = "gcloud storage cp " + oldname + " " + self.gcp_bucket_uri + "/" + newname
-      self.logger.debug("TABLE:Running command: " + transfer_command)
+      check_if_transferred_command = "gcloud storage ls " + self.gcp_bucket_uri + "/" + newname
+      self.logger.debug("TABLE:Running command: " + check_if_transferred_command)
       try:
-        subprocess.run(transfer_command, shell=True, check=True)
+        subprocess.run(check_if_transferred_command, shell=True, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        self.logger.warning("TABLE:Warning: A file with an identical name was found in the destination Google bucket; data transfer will be skipped.")
       except:
-        self.logger.error("TABLE:Error: non-zero exit code when copying files to GCP bucket ({})".format(self.gcp_bucket_uri))
-        sys.exit(1)
+        self.logger.debug("TABLE:The data did not appear in the bucket; now attempting to transfer the data")
+        
+        transfer_command = "gcloud storage cp " + oldname + " " + self.gcp_bucket_uri + "/" + newname
+        self.logger.debug("TABLE:Running command: " + transfer_command)
+        try:
+          subprocess.run(transfer_command, shell=True, check=True)
+        except:
+          self.logger.error("TABLE:Error: non-zero exit code when copying files to GCP bucket ({})".format(self.gcp_bucket_uri))
+          sys.exit(1)
     
     self.logger.info("TABLE:Files copied to the indicated GCP bucket ({})".format(self.gcp_bucket_uri))
     self.logger.debug("TABLE:SRA metadata file created and data transferred")

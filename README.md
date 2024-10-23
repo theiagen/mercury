@@ -27,16 +27,16 @@ Default databases by organism:
 We highly recommend using the following Docker image to run Mercury:
 
 ```bash
-docker pull us-docker.pkg.dev/general-theiagen/theiagen/mercury:1.0.8
+docker pull us-docker.pkg.dev/general-theiagen/theiagen/mercury:1.0.9
 ```
 
 The entrypoint for this Docker image is the Mercury help message. To run this container interactively, use the following command:
 
 ```bash
-docker run -it --entrypoint=/bin/bash us-docker.pkg.dev/general-theiagen/theiagen/mercury:1.0.8
+docker run -it --entrypoint=/bin/bash us-docker.pkg.dev/general-theiagen/theiagen/mercury:1.0.9
 # Once inside the container interactively, you can run the mercury tool
 python3 /mercury/mercury/mercury.py -v
-# v1.0.8
+# v1.0.9
 ```
 
 ### Locally with Python

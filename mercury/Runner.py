@@ -43,7 +43,7 @@ class Runner:
     if self.clearlabs_data:
       self.read1_column_name = "clearlabs_fastq_gz"
       self.assembly_fasta_column_name = "clearlabs_fasta"
-      self.assembly_mean_coverage_column_name = "clearlabs_assembly_coverage"
+      self.assembly_mean_coverage_column_name = "clearlabs_sequencing_depth"
       
     if self.reads_dehosted:
       self.read1_column_name = "reads_dehosted"
