@@ -123,6 +123,7 @@ class Table:
       else: 
         self.table["gisaid_virus_name"] = (self.table["gisaid_organism"] + "/" + self.table["country"] + "/" + self.table["submission_id"] + "/" + self.table["year"])
 
+    # Overwrite preexisting inputs if table values do not evaluate to False
     if self.authors:
       self.table["authors"] = self.authors
     if self.bioproject_accession:
