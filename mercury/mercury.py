@@ -24,7 +24,8 @@ def main():
                       help="The prefix for the output files\ndefault=\"mercury\"", default="mercury", metavar="\b", type=str)
   parser.add_argument("-b", "--gcp_bucket_uri",
                       help="The GCP bucket URI to store the temporarily store the read files (required)", metavar="\b", required=True, type=str)
-  
+
+  # CHANGES will occur here 
   submission_type_arguments = parser.add_argument_group("submission type arguments", "options that determine submission type")
   submission_type_arguments.add_argument("--organism", 
                                          help="The organism type of the samples in the table\ndefault=\"sars-cov-2\"", default="sars-cov-2", metavar="\b", type=str)
