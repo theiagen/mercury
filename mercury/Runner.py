@@ -78,7 +78,15 @@ class Runner:
     metadata_list = metadata.get_metadata()      
     
     self.logger.debug("RUNNER:Processing table")
-    table = Table(self.logger, self.organism, self.input_table, self.table_name, self.samplenames, self.skip_county, self.skip_ncbi, self.usa_territory, metadata_list, self.vadr_alert_limit, self.number_n_threshold, self.assembly_fasta_column_name, self.output_prefix, self.gcp_bucket_uri, self.single_end, self.read1_column_name, self.assembly_mean_coverage_column_name, self.read2_column_name)
+    table = Table(self.logger, self.organism, self.input_table, self.table_name, self.samplenames, self.skip_county, 
+                  self.skip_ncbi, self.usa_territory, metadata_list, self.vadr_alert_limit, self.number_n_threshold, 
+                  self.assembly_fasta_column_name, self.output_prefix, self.gcp_bucket_uri, self.single_end, 
+                  self.read1_column_name, self.assembly_mean_coverage_column_name, 
+                  self.authors, self.bioproject_accession, self.continent, self.country, self.host_disease, 
+                  self.isolation_source, self.library_selection, self.library_source, self.library_strategy, 
+                  self.purpose_of_sequencing, self.state, self.submitting_lab, self.submitting_lab_address, 
+                  self.amplicon_primer_scheme, self.amplicon_size, self.instrument_model, self.library_layout, self.seq_platform, 
+                  self.gisaid_submitter, self.submitter_email, self.read2_column_name)
     table.process_table()
       
     self.logger.info("RUNNER:Done!")

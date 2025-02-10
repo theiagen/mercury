@@ -9,7 +9,13 @@ class Table:
   """This class controls the manipulation of the table
   """
   
-  def __init__(self, logger, organism, input_table, table_name, samplenames, skip_county, skip_ncbi, usa_territory, metadata_list, vadr_alert_limit, number_n_threshold, assembly_fasta_column_name, output_prefix, gcp_bucket_uri, single_end, read1_column_name,  assembly_mean_coverage_column_name, read2_column_name=""):
+  def __init__(self, logger, organism, input_table, table_name, samplenames, skip_county, skip_ncbi, 
+               usa_territory, metadata_list, vadr_alert_limit, number_n_threshold, assembly_fasta_column_name, 
+               output_prefix, gcp_bucket_uri, single_end, read1_column_name, assembly_mean_coverage_column_name, 
+               authors, bioproject_accession, continent, country, host_disease, isolation_source, library_selection, 
+               library_source, library_strategy, purpose_of_sequencing, state, submitting_lab, submitting_lab_address, 
+               amplicon_primer_scheme, amplicon_size, instrument_model, library_layout, seq_platform, 
+               gisaid_submitter, submitter_email, read2_column_name=""):
     self.logger = logger
     self.logger.debug("TABLE:Initializing Table class")
     
@@ -34,6 +40,27 @@ class Table:
 
     self.gcp_bucket_uri = gcp_bucket_uri
     self.single_end = single_end
+    self.authors = authors
+    self.bioproject_accession = bioproject_accession
+    self.continent = continent
+    self.country = country
+    self.host_disease = host_disease
+    self.isolation_source = isolation_source
+    self.library_selection = library_selection
+    self.library_source = library_source
+    self.library_strategy = library_strategy
+    self.purpose_of_sequencing = purpose_of_sequencing
+    self.state = state
+    self.submitting_lab = submitting_lab
+    self.submitting_lab_address = submitting_lab_address
+    self.amplicon_primer_scheme = amplicon_primer_scheme
+    self.amplicon_size = amplicon_size
+    self.instrument_model = instrument_model
+    self.library_layout = library_layout
+    self.seq_platform = seq_platform
+    self.gisaid_submitter = gisaid_submitter
+    self.submitter_email = submitter_email
+
     # transform the input table into a pandas dataframe
     self.logger.debug("TABLE:Loading input table")
     self.table = pd.read_csv(self.input_table, sep="\t", header=0, dtype={self.table_name: 'str'})
