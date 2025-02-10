@@ -122,6 +122,47 @@ class Table:
         self.table["gisaid_virus_name"] = (self.table["gisaid_organism"] + "/" + self.table["state"] + "/" + self.table["submission_id"] + "/" + self.table["year"])
       else: 
         self.table["gisaid_virus_name"] = (self.table["gisaid_organism"] + "/" + self.table["country"] + "/" + self.table["submission_id"] + "/" + self.table["year"])
+
+    if self.authors:
+      self.table["authors"] = self.authors
+    if self.bioproject_accession:
+      self.table["bioproject_accession"] = self.bioproject_accession
+    if self.continent:
+      self.table["continent"] = self.continent
+    if self.country:
+      self.table["country"] = self.country
+    if self.host_disease:
+      self.table["host_disease"] = self.host_disease
+    if self.isolation_source:
+      self.table["isolation_source"] = self.isolation_source
+    if self.library_selection:
+      self.table["library_selection"] = self.library_selection
+    if self.library_source:
+      self.table["library_source"] = self.library_source
+    if self.library_strategy:
+      self.table["library_strategy"] = self.library_strategy
+    if self.purpose_of_sequencing:
+      self.table["purpose_of_sequencing"] = self.purpose_of_sequencing
+    if self.state:
+      self.table["state"] = self.state
+    if self.submitting_lab:
+      self.table["submitting_lab"] = self.submitting_lab
+    if self.submitting_lab_address:
+      self.table["submitting_lab_address"] = self.submitting_lab_address
+    if self.amplicon_primer_scheme:
+      self.table["amplicon_primer_scheme"] = self.amplicon_primer_scheme
+    if self.amplicon_size:
+      self.table["amplicon_size"] = self.amplicon_size
+    if self.instrument_model:
+      self.table["instrument_model"] = self.instrument_model
+    if self.library_layout:
+      self.table["library_layout"] = self.library_layout
+    if self.seq_platform:
+      self.table["seq_platform"] = self.seq_platform
+    if self.gisaid_submitter:
+      self.table["gisaid_submitter"] = self.gisaid_submitter
+    if self.submitter_email:
+      self.table["submitter_email"] = self.submitter_email
       
     
   def remove_nas(self):
