@@ -142,6 +142,8 @@ class Table:
       self.table["library_source"] = self.library_source
     if self.library_strategy:
       self.table["library_strategy"] = self.library_strategy
+    if self.organism:
+      self.table["organism"] = self.organism
     if self.purpose_of_sequencing:
       self.table["purpose_of_sequencing"] = self.purpose_of_sequencing
     if self.state:
