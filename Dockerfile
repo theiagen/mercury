@@ -61,8 +61,8 @@ RUN git clone -b kzm-mercury-dev https://github.com/theiagen/mercury.git && \
 # final working directory is /data
 WORKDIR /data
 
-# put broadinstitute/terra-tools scripts onto the PATH
-ENV PATH=${PATH}:/scripts
+# put broadinstitute/terra-tools & mercury scripts onto the PATH
+ENV PATH=${PATH}:/scripts:/mercury/mercury
 
 # check that we have stuff installed
-RUN gcloud storage --help && pip3 list && python3 /mercury/mercury/mercury.py --help
+RUN gcloud storage --help && pip3 list && mercury.py --help
