@@ -55,8 +55,7 @@ ENV LC_ALL=C
   # mv -v mercury-${MERCURY_VER} /mercury
 
 # TO DELETE: TESTING UPDATE
-RUN git clone -b kzm-mercury-dev https://github.com/theiagen/mercury.git && \
-   mv -f mercury /mercury
+RUN git clone -b kzm-mercury-dev https://github.com/theiagen/mercury.git
 
 # final working directory is /data
 WORKDIR /data
