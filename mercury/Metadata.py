@@ -62,7 +62,7 @@ class Metadata:
     required_metadata = []
     optional_metadata = []
     if not self.skip_ncbi:
-      self.logger.debug("METADATA:NCBI submission is not skipping, retrieving NCIB-specific metadata requirements for " + self.organism)
+      self.logger.debug("METADATA:NCBI submission is not skipping, retrieving NCBI-specific metadata requirements for " + self.organism)
       if self.organism == "sars-cov-2":
         biosample_required, biosample_optional = self.sc2_biosample_metadata()
         sra_required, sra_optional = self.sra_metadata()
