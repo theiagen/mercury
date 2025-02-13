@@ -49,7 +49,7 @@ class Runner:
       self.read1_column_name = "reads_dehosted"
       
     if self.organism not in ["sars-cov-2", "flu", "mpox"]:
-      self.logger.error(f"RUNNER:Error: Organism not recognized")
+      self.logger.error(f"RUNNER:Error: Organism {self.organism} not recognized")
       sys.exit(1)
 
     self.authors = " ".join(options.authors.replace("'", "").replace('"', ""))
