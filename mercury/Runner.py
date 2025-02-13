@@ -52,26 +52,26 @@ class Runner:
       self.logger.error("RUNNER:Error: Organism not recognized")
       sys.exit(1)
 
-    self.authors = options.authors
-    self.bioproject_accession = options.bioproject_accession
-    self.continent = options.continent
-    self.country = options.country
-    self.host_disease = options.host_disease
-    self.isolation_source = options.isolation_source
-    self.library_selection = options.library_selection
-    self.library_source = options.library_source
-    self.library_strategy = options.library_strategy
-    self.purpose_of_sequencing = options.purpose_of_sequencing
-    self.state = options.state
-    self.submitting_lab = options.submitting_lab
-    self.submitting_lab_address = options.submitting_lab_address
-    self.amplicon_primer_scheme = options.amplicon_primer_scheme
-    self.amplicon_size = options.amplicon_size
-    self.instrument_model = options.instrument_model
-    self.library_layout = options.library_layout
-    self.seq_platform = options.seq_platform
-    self.gisaid_submitter = options.gisaid_submitter
-    self.submitter_email = options.submitter_email
+    self.authors = " ".join(options.authors)
+    self.bioproject_accession = " ".join(options.bioproject_accession)
+    self.continent = " ".join(options.continent)
+    self.country = " ".join(options.country)
+    self.host_disease = " ".join(options.host_disease)
+    self.isolation_source = " ".join(options.isolation_source)
+    self.library_selection = " ".join(options.library_selection)
+    self.library_source = " ".join(options.library_source)
+    self.library_strategy = " ".join(options.library_strategy)
+    self.purpose_of_sequencing = " ".join(options.purpose_of_sequencing)
+    self.state = " ".join(options.state)
+    self.submitting_lab = " ".join(options.submitting_lab)
+    self.submitting_lab_address = " ".join(options.submitting_lab_address)
+    self.amplicon_primer_scheme = " ".join(options.amplicon_primer_scheme)
+    self.amplicon_size = " ".join(options.amplicon_size)
+    self.instrument_model = " ".join(options.instrument_model)
+    self.library_layout = " ".join(options.library_layout)
+    self.seq_platform = " ".join(options.seq_platform)
+    self.gisaid_submitter = " ".join(options.gisaid_submitter)
+    self.submitter_email = " ".join(options.submitter_email)
 
 
   def check_gcloud_dependency(self):
