@@ -125,6 +125,7 @@ class Table:
 
     # Overwrite preexisting inputs if these values do not evaluate to False
     if self.authors:
+      self.logger.debug(f"TABLE:Overwriting authors {self.authors}")
       self.table["authors"] = self.authors
     if self.bioproject_accession:
       self.table["bioproject_accession"] = self.bioproject_accession
