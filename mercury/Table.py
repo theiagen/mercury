@@ -504,6 +504,7 @@ class Table:
     gisaid_metadata.to_csv(self.output_prefix + "_gisaid_metadata.csv", sep=',', index=False)  
     
     for oldname, newname, virus_name in assembly_tuples:
+      self.logger.debug(f"TABLE:oldname: {oldname}; newname: {newname}; virus_name: {virus_name}")
       assembly_rename_command = "gcloud storage cp " + oldname + " ./" + newname
       self.logger.debug("TABLE:Running command: " + assembly_rename_command)
       try:
