@@ -471,15 +471,20 @@ class Table:
       
       # make dictionary for renaming headers
       # format: {original : new} or {metadata_formatter : gisaid_format}
-      gisaid_rename_headers = {"gisaid_virus_name" : "covv_virus_name", "org_location" : "covv_location", "additional_host_information" : "covv_add_host_info", "gisaid_submitter" : "submitter", "collection_date" : "covv_collection_date", "seq_platform" : "covv_seq_technology", "host" : "covv_host", "assembly_method" : "covv_assembly_method", self.assembly_mean_coverage_column_name : "covv_coverage", "collecting_lab" : "covv_orig_lab", "collecting_lab_address" : "covv_orig_lab_addr", "submitting_lab" : "covv_subm_lab", "submitting_lab_address" : "covv_subm_lab_addr", "authors" : "covv_authors", "purpose_of_sequencing" : "covv_sampling_strategy", "patient_gender" : "covv_gender", "patient_age" : "covv_patient_age", "patient_status" : "covv_patient_status", "specimen_source" : "covv_specimen", "outbreak" : "covv_outbreak", "last_vaccinated" : "covv_last_vaccinated", "treatment" : "covv_treatment", "consortium" : "covv_consortium"}
-      
+      virus_header = "covv_virus_name"
+      gisaid_rename_headers = {"gisaid_virus_name" : virus_header, "org_location" : "covv_location", "additional_host_information" : "covv_add_host_info", "gisaid_submitter" : "submitter", "collection_date" : "covv_collection_date", "seq_platform" : "covv_seq_technology", "host" : "covv_host", "assembly_method" : "covv_assembly_method", self.assembly_mean_coverage_column_name : "covv_coverage", "collecting_lab" : "covv_orig_lab", "collecting_lab_address" : "covv_orig_lab_addr", "submitting_lab" : "covv_subm_lab", "submitting_lab_address" : "covv_subm_lab_addr", "authors" : "covv_authors", "purpose_of_sequencing" : "covv_sampling_strategy", "patient_gender" : "covv_gender", "patient_age" : "covv_patient_age", "patient_status" : "covv_patient_status", "specimen_source" : "covv_specimen", "outbreak" : "covv_outbreak", "last_vaccinated" : "covv_last_vaccinated", "treatment" : "covv_treatment", "consortium" : "covv_consortium"}
+
     elif self.organism == "mpox":
       # add additional mpox-specific columns
       gisaid_metadata["pox_passage"] = "original"
       
       # make dictionary for renaming headers
       # format: {original : new} or {metadata_formatter : gisaid_format}
-      gisaid_rename_headers = {"gisaid_virus_name" : "pox_virus_name", "org_location" : "pox_location", "gisaid_submitter" : "submitter", "passage_details" : "pox_passage", "collection_date" : "pox_collection_date", "seq_platform" : "pox_seq_technology", "host" : "pox_host", "assembly_method" : "pox_assembly_method", self.assembly_mean_coverage_column_name : "pox_coverage", "collecting_lab" : "pox_orig_lab", "collecting_lab_address" : "pox_orig_lab_addr", "submitting_lab" : "pos_subm_lab", "submitting_lab_address" : "pox_subm_lab_addr", "authors" : "pox_authors", "purpose_of_sequencing" : "pox_sampling_strategy", "patient_gender" : "pox_gender", "patient_age" : "pox_patient_age", "patient_status" : "pox_patient_status", "specimen_source" : "pox_specimen_source", "outbreak" : "pox_outbreak", "last_vaccinated" : "pox_last_vaccinated", "treatment" : "pox_treatment"}
+      virus_header = "pox_virus_name"
+      gisaid_rename_headers = {"gisaid_virus_name" : virus_header, "org_location" : "pox_location", "gisaid_submitter" : "submitter", "passage_details" : "pox_passage", "collection_date" : "pox_collection_date", "seq_platform" : "pox_seq_technology", "host" : "pox_host", "assembly_method" : "pox_assembly_method", self.assembly_mean_coverage_column_name : "pox_coverage", "collecting_lab" : "pox_orig_lab", "collecting_lab_address" : "pox_orig_lab_addr", "submitting_lab" : "pos_subm_lab", "submitting_lab_address" : "pox_subm_lab_addr", "authors" : "pox_authors", "purpose_of_sequencing" : "pox_sampling_strategy", "patient_gender" : "pox_gender", "patient_age" : "pox_patient_age", "patient_status" : "pox_patient_status", "specimen_source" : "pox_specimen_source", "outbreak" : "pox_outbreak", "last_vaccinated" : "pox_last_vaccinated", "treatment" : "pox_treatment"}
+
+    else:
+      virus_header = "gisaid_virus_name"
 
     gisaid_metadata.drop(["continent", "country", "state", "county"], axis=1, inplace=True)
 
@@ -495,7 +500,7 @@ class Table:
  
     self.logger.debug("TABLE:Now preparing the command to rewrite the header of every fasta file to the preferred format")
     gisaid_metadata["fn"] = gisaid_metadata["submission_id"] + "_gisaid.fasta"
-    assembly_tuples = list(zip(self.table[self.assembly_fasta_column_name], gisaid_metadata["fn"], gisaid_metadata["gisaid_virus_name"]))
+    assembly_tuples = list(zip(self.table[self.assembly_fasta_column_name], gisaid_metadata["fn"], gisaid_metadata[virus_header]))
     
     gisaid_metadata.drop(["submission_id"], axis=1, inplace=True)
 
