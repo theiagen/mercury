@@ -96,33 +96,7 @@ class Table:
     """This function creates standard variables in the table
     """
     self.logger.debug("TABLE:Creating standard variables like date and host")
-    self.table["year"] = self.table["collection_date"].apply(lambda x: self.get_year_from_date(x))
-    self.table["host"] = "Human" #(????)
-    if self.skip_ncbi:
-      self.logger.debug("TABLE:Skipping creating NCBI-specific variables")
-    else:
-      self.logger.debug("TABLE:Creating NCBI-specific variables")
-      self.table["host_sci_name"] = "Homo sapiens"
-      self.table["filetype"] = "fastq"
-      
-      if self.organism != "flu":
-        self.table["isolate"] = (self.table["organism"] + "/" + self.table["host"] + "/" + self.table["country"] + "/" + self.table["submission_id"] + "/" + self.table["year"])
-      
-      self.table["biosample_accession"] = "{populate_with_BioSample_accession}"
-      self.table["design_description"] = "Whole genome sequencing of " + self.table["organism"] 
-    
-    if self.organism == "sars-cov-2":
-      self.table["gisaid_organism"] = "hCoV-19"
-    elif self.organism == "mpox":
-      self.table["gisaid_organism"] = "mpx/A"
-
-    if self.organism != "flu":
-      if self.usa_territory:
-        # if usa territory, use "state" (e.g., Puerto Rico) instead of country (USA)
-        self.table["gisaid_virus_name"] = (self.table["gisaid_organism"] + "/" + self.table["state"] + "/" + self.table["submission_id"] + "/" + self.table["year"])
-      else: 
-        self.table["gisaid_virus_name"] = (self.table["gisaid_organism"] + "/" + self.table["country"] + "/" + self.table["submission_id"] + "/" + self.table["year"])
-
+    self.table["organism"] = self.organism
     # Overwrite preexisting inputs if these values do not evaluate to False
     if self.authors:
       self.table["authors"] = self.authors
@@ -142,8 +116,6 @@ class Table:
       self.table["library_source"] = self.library_source
     if self.library_strategy:
       self.table["library_strategy"] = self.library_strategy
-    if self.organism:
-      self.table["organism"] = self.organism
     if self.purpose_of_sequencing:
       self.table["purpose_of_sequencing"] = self.purpose_of_sequencing
     if self.state:
@@ -166,7 +138,36 @@ class Table:
       self.table["gisaid_submitter"] = self.gisaid_submitter
     if self.submitter_email:
       self.table["submitter_email"] = self.submitter_email
+
+    self.table["year"] = self.table["collection_date"].apply(lambda x: self.get_year_from_date(x))
+    self.table["host"] = "Human" #(????)
+    if self.skip_ncbi:
+      self.logger.debug("TABLE:Skipping creating NCBI-specific variables")
+    else:
+      self.logger.debug("TABLE:Creating NCBI-specific variables")
+      self.table["host_sci_name"] = "Homo sapiens"
+      self.table["filetype"] = "fastq"
+      
+      if self.organism != "flu":
+        self.table["isolate"] = (self.table["organism"] + "/" + self.table["host"] + "/" + self.table["country"] + "/" + self.table["submission_id"] + "/" + self.table["year"])
+      
+      self.table["biosample_accession"] = "{populate_with_BioSample_accession}"
+      self.table["design_description"] = "Whole genome sequencing of " + self.table["organism"] 
     
+    if self.organism == "sars-cov-2":
+      self.table["gisaid_organism"] = "hCoV-19"
+    elif self.organism == "mpox":
+      self.table["gisaid_organism"] = "mpx/A"
+
+    if self.organism != "flu":
+      self.logger.debug("TABLE: populating gisaid_virus_name")
+      if self.usa_territory:
+        # if usa territory, use "state" (e.g., Puerto Rico) instead of country (USA)
+        self.table["gisaid_virus_name"] = (self.table["gisaid_organism"] + "/" + self.table["state"] + "/" + self.table["submission_id"] + "/" + self.table["year"])
+      else: 
+        self.table["gisaid_virus_name"] = (self.table["gisaid_organism"] + "/" + self.table["country"] + "/" + self.table["submission_id"] + "/" + self.table["year"])
+
+      
   def remove_nas(self):
     """This function removes rows with missing values in the required metadata columns and writes them to a file
     """
@@ -444,6 +445,7 @@ class Table:
     
     for column in self.gisaid_optional:
       if column in self.table.columns:
+        self.logger.debug("TABLE:Adding column " + column + " to GISAID metadata")
         gisaid_metadata[column] = self.table[column]
       else:
         gisaid_metadata[column] = ""
@@ -504,7 +506,6 @@ class Table:
     gisaid_metadata.to_csv(self.output_prefix + "_gisaid_metadata.csv", sep=',', index=False)  
     
     for oldname, newname, virus_name in assembly_tuples:
-      self.logger.debug(f"TABLE:oldname: {oldname}; newname: {newname}; virus_name: {virus_name}")
       assembly_rename_command = "gcloud storage cp " + oldname + " ./" + newname
       self.logger.debug("TABLE:Running command: " + assembly_rename_command)
       try:
