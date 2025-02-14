@@ -18,10 +18,6 @@ class Runner:
         self.logger.setLevel(logging.DEBUG)
         self.logger.debug("RUNNER:Debug mode enabled")
 
-    # DEBUG arguments
-    for arg in vars(options):
-      self.logger.debug(f"RUNNER:Argument {arg}: {getattr(options, arg)}")
-
     self.input_table = options.input_table
     self.table_name = options.table_name
     self.samplenames = options.samplenames

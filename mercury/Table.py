@@ -100,44 +100,64 @@ class Table:
     # Overwrite preexisting inputs if these values do not evaluate to False
     if self.authors:
       self.table["authors"] = self.authors
+      self.logger.debug(f"TABLE:Authors were provided, overwriting authors column with {self.authors}")
     if self.bioproject_accession:
       self.table["bioproject_accession"] = self.bioproject_accession
+      self.logger.debug(f"TABLE:BioProject accession was provided, overwriting BioProject accession column with {self.bioproject_accession}")
     if self.continent:
       self.table["continent"] = self.continent
+      self.logger.debug(f"TABLE:Continent was provided, overwriting continent column with {self.continent}")
     if self.country:
       self.table["country"] = self.country
+      self.logger.debug(f"TABLE:Country was provided, overwriting country column with {self.country}")
     if self.host_disease:
       self.table["host_disease"] = self.host_disease
+      self.logger.debug(f"TABLE:Host disease was provided, overwriting host_disease column with {self.host_disease}")
     if self.isolation_source:
       self.table["isolation_source"] = self.isolation_source
+      self.logger.debug(f"TABLE:Isolation source was provided, overwriting isolation_source column with {self.isolation_source}")
     if self.library_selection:
       self.table["library_selection"] = self.library_selection
+      self.logger.debug(f"TABLE:Library selection was provided, overwriting library_selection column with {self.library_selection}")
     if self.library_source:
       self.table["library_source"] = self.library_source
+      self.logger.debug(f"TABLE:Library source was provided, overwriting library_source column with {self.library_source}")
     if self.library_strategy:
       self.table["library_strategy"] = self.library_strategy
+      self.logger.debug(f"TABLE:Library strategy was provided, overwriting library_strategy column with {self.library_strategy}")
     if self.purpose_of_sequencing:
       self.table["purpose_of_sequencing"] = self.purpose_of_sequencing
+      self.logger.debug(f"TABLE:Purpose of sequencing was provided, overwriting purpose_of_sequencing column with {self.purpose_of_sequencing}")
     if self.state:
       self.table["state"] = self.state
+      self.logger.debug(f"TABLE:State was provided, overwriting state column with {self.state}")
     if self.submitting_lab:
       self.table["submitting_lab"] = self.submitting_lab
+      self.logger.debug(f"TABLE:Submitting lab was provided, overwriting submitting_lab column with {self.submitting_lab}")
     if self.submitting_lab_address:
       self.table["submitting_lab_address"] = self.submitting_lab_address
+      self.logger.debug(f"TABLE:Submitting lab address was provided, overwriting submitting_lab_address column with {self.submitting_lab_address}")
     if self.amplicon_primer_scheme:
       self.table["amplicon_primer_scheme"] = self.amplicon_primer_scheme
+      self.logger.debug(f"TABLE:Amplicon primer scheme was provided, overwriting amplicon_primer_scheme column with {self.amplicon_primer_scheme}")
     if self.amplicon_size:
       self.table["amplicon_size"] = self.amplicon_size
+      self.logger.debug(f"TABLE:Amplicon size was provided, overwriting amplicon_size column with {self.amplicon_size}")
     if self.instrument_model:
       self.table["instrument_model"] = self.instrument_model
+      self.logger.debug(f"TABLE:Instrument model was provided, overwriting instrument_model column with {self.instrument_model}")
     if self.library_layout:
       self.table["library_layout"] = self.library_layout
+      self.logger.debug(f"TABLE:Library layout was provided, overwriting library_layout column with {self.library_layout}")
     if self.seq_platform:
       self.table["seq_platform"] = self.seq_platform
+      self.logger.debug(f"TABLE:Sequencing platform was provided, overwriting seq_platform column with {self.seq_platform}")
     if self.gisaid_submitter:
       self.table["gisaid_submitter"] = self.gisaid_submitter
+      self.logger.debug(f"TABLE:GISAID submitter was provided, overwriting gisaid_submitter column with {self.gisaid_submitter}")
     if self.submitter_email:
       self.table["submitter_email"] = self.submitter_email
+      self.logger.debug(f"TABLE:Submitter email was provided, overwriting submitter_email column with {self.submitter_email}")
 
     self.table["year"] = self.table["collection_date"].apply(lambda x: self.get_year_from_date(x))
     self.table["host"] = "Human" #(????)
