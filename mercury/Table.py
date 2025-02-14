@@ -62,7 +62,7 @@ class Table:
     self.submitter_email = submitter_email
 
     # transform the input table into a pandas dataframe
-    self.logger.debug("TABLE:Loading input table")
+    self.logger.debug(f"TABLE:Loading input table {self.input_table}")
     self.table = pd.read_csv(self.input_table, sep="\t", header=0, dtype={self.table_name: 'str'})
 
   def get_year_from_date(self, date):
