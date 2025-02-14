@@ -560,7 +560,7 @@ class Table:
     self.remove_nas()
     
     if self.table.empty:
-      self.logger.error("TABLE:ENDING PROCESS! No samples were found in the table after extraction and cleaning. Check the input table and/or the excluded samples table and try again.")
+      self.logger.error("TABLE:ENDING PROCESS! No samples were found in the table after extraction and cleaning. Check the input table and/or the excluded samples table for missing columns and populate in the table or metadata customization parameters.")
       sys.exit(1)
     
     
