@@ -23,7 +23,7 @@ class Runner:
     self.samplenames = options.samplenames
     self.output_prefix = options.output_prefix
     self.gcp_bucket_uri = options.gcp_bucket_uri
-    self.organism = options.organism.lower()
+    self.organism = options.organism
     self.skip_ncbi = options.skip_ncbi
     self.skip_county = options.skip_county
     self.usa_territory = options.usa_territory
@@ -48,7 +48,7 @@ class Runner:
     if self.reads_dehosted:
       self.read1_column_name = "reads_dehosted"
       
-    if self.organism not in ["sars-cov-2", "flu", "mpox"]:
+    if self.organism.lower() not in ["sars-cov-2", "flu", "mpox"]:
       self.logger.error(f"RUNNER:Error: Organism {self.organism} not recognized")
       sys.exit(1)
 

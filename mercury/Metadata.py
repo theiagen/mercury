@@ -44,7 +44,7 @@ class Metadata:
     sra_optional = ["title", "design_description", "amplicon_primer_scheme", "amplicon_size", "assembly_method", "dehosting_method", "submitter_email"]
     
     # note: the flu metadata formatter currently uses "platform" instead of "seq_platform" because it uses the Terra_2_NCBI Pathogen BioSample formatter.
-    if self.organism == "flu":
+    if self.organism.lower() == "flu":
       sra_required.append("platform")
     else:
       sra_required.append("seq_platform")
@@ -63,7 +63,7 @@ class Metadata:
     optional_metadata = []
     if not self.skip_ncbi:
       self.logger.debug("METADATA:NCBI submission is not skipping, retrieving NCBI-specific metadata requirements for " + self.organism)
-      if self.organism == "sars-cov-2":
+      if self.organism.lower() == "sars-cov-2":
         biosample_required, biosample_optional = self.sc2_biosample_metadata()
         sra_required, sra_optional = self.sra_metadata()
         genbank_required, genbank_optional = self.genbank_metadata()
@@ -71,14 +71,14 @@ class Metadata:
         required_metadata = [biosample_required, sra_required, genbank_required]
         optional_metadata = [biosample_optional, sra_optional, genbank_optional]
         self.logger.debug("METADATA:NCBI-specific metadata retrieved for " + self.organism)
-      elif self.organism == "flu":
+      elif self.organism.lower() == "flu":
         biosample_required, biosample_optional = self.flu_biosample_metadata()
         sra_required, sra_optional = self.sra_metadata()
         
         required_metadata = [biosample_required, sra_required]
         optional_metadata = [biosample_optional, sra_optional]
         self.logger.debug("METADATA:NCBI-specific metadata retrieved for " + self.organism)
-      elif self.organism == "mpox":
+      elif self.organism.lower() == "mpox":
         biosample_required, biosample_optional = self.mpox_biosample_metadata()
         sra_required, sra_optional = self.sra_metadata()
         bankit_required, bankit_optional = self.bankit_metadata()
@@ -93,13 +93,13 @@ class Metadata:
       self.logger.debug("METADATA:NCBI submission is skipped, no NCBI-specific metadata was retrieved")
 
     self.logger.debug("METADATA:Retrieving GISAID metadata requirements for " + self.organism)
-    if self.organism == "sars-cov-2":
+    if self.organism.lower() == "sars-cov-2":
       gisaid_required, gisaid_optional = self.sc2_gisaid_metadata()
       
       required_metadata = required_metadata + [gisaid_required]
       optional_metadata = optional_metadata + [gisaid_optional] 
       self.logger.debug("METADATA:GISAID metadata retrieved successfully for " + self.organism)
-    elif self.organism == "mpox":
+    elif self.organism.lower() == "mpox":
       gisaid_required, gisaid_optional = self.mpox_gisaid_metadata()
      
       required_metadata = required_metadata + [gisaid_required]

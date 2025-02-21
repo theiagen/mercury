@@ -168,18 +168,18 @@ class Table:
       self.table["host_sci_name"] = "Homo sapiens"
       self.table["filetype"] = "fastq"
       
-      if self.organism != "flu":
+      if self.organism.lower() != "flu":
         self.table["isolate"] = (self.table["organism"] + "/" + self.table["host"] + "/" + self.table["country"] + "/" + self.table["submission_id"] + "/" + self.table["year"])
       
       self.table["biosample_accession"] = "{populate_with_BioSample_accession}"
       self.table["design_description"] = "Whole genome sequencing of " + self.table["organism"] 
     
-    if self.organism == "sars-cov-2":
+    if self.organism.lower() == "sars-cov-2":
       self.table["gisaid_organism"] = "hCoV-19"
-    elif self.organism == "mpox":
+    elif self.organism.lower() == "mpox":
       self.table["gisaid_organism"] = "mpx/A"
 
-    if self.organism != "flu":
+    if self.organism.lower() != "flu":
       self.logger.debug("TABLE: populating gisaid_virus_name")
       if self.usa_territory:
         # if usa territory, use "state" (e.g., Puerto Rico) instead of country (USA)
@@ -245,15 +245,15 @@ class Table:
       self.gisaid_required, self.gisaid_optional = temp_required_metadata[0], temp_optional_metadata[0]
     else:
       self.logger.debug("TABLE:NCBI submission not skipped, keeping NCBI-specific metadata requirements")
-      if self.organism == "sars-cov-2":
+      if self.organism.lower() == "sars-cov-2":
         self.biosample_required, self.sra_required, self.genbank_required, self.gisaid_required = temp_required_metadata[0], temp_required_metadata[1], temp_required_metadata[2], temp_required_metadata[3]
         self.biosample_optional, self.sra_optional, self.genbank_optional, self.gisaid_optional = temp_optional_metadata[0], temp_optional_metadata[1], temp_optional_metadata[2], temp_optional_metadata[3]
         
-      elif self.organism == "flu":
+      elif self.organism.lower() == "flu":
         self.biosample_required, self.sra_required = temp_required_metadata[0], temp_required_metadata[1]
         self.biosample_optional, self.sra_optional = temp_optional_metadata[0], temp_optional_metadata[1]
       
-      elif self.organism == "mpox":
+      elif self.organism.lower() == "mpox":
         self.biosample_required, self.sra_required, self.bankit_required, self.gisaid_required = temp_required_metadata[0], temp_required_metadata[1], temp_required_metadata[2], temp_required_metadata[3]
         self.biosample_optional, self.sra_optional, self.bankit_optional, self.gisaid_required = temp_optional_metadata[0], temp_optional_metadata[1], temp_optional_metadata[2], temp_optional_metadata[3]
 
@@ -285,15 +285,15 @@ class Table:
 
     biosample_metadata.rename(columns={"submission_id" : "sample_name"}, inplace=True)
     
-    if self.organism == "mpox" or self.organism == "sars-cov-2":
+    if self.organism.lower() in {"mpox", "sars-cov-2"}:
       biosample_metadata["geo_loc_name"] = biosample_metadata["country"] + ": " + biosample_metadata["state"]
       biosample_metadata.drop(["country", "state"], axis=1, inplace=True)
 
       biosample_metadata.rename(columns={"collecting_lab" : "collected_by", "host_sci_name" : "host", "patient_gender" : "host_sex", "patient_age" : "host_age"}, inplace=True)      
-      if self.organism == "sars-cov-2":
+      if self.organism.lower() == "sars-cov-2":
         biosample_metadata.rename(columns={"treatment" : "antiviral_treatment_agent"}, inplace=True)
     # Flu only: when user does not supply isolate or strain metadata columns, create "isolate" column using the syntax below
-    elif self.organism == "flu" and user_supplied_isolate_or_strain == False :
+    elif self.organism.lower() == "flu" and user_supplied_isolate_or_strain == False :
       # type/state/submission_id/year (subtype)
       # strip off "Type_" from beginning of Type, e.g. "Type_A" -> "A"
       self.logger.debug("DEBUG:User did not supply isolate or strain metadata columns, creating isolate column for Flu samples now...")
@@ -320,7 +320,7 @@ class Table:
         
     sra_metadata.rename(columns={"submission_id" : "sample_name", "library_id" : "library_ID"}, inplace=True)
   
-    if self.organism != "flu":
+    if self.organism.lower() != "flu":
       # these columns are named differently in the mercury metadata preparation spreadsheets 
       sra_metadata.rename(columns={"amplicon_primer_scheme" : "amplicon_PCR_primer_scheme", "submitter_email" : "sequence_submitter_contact_email", "assembly_method" : "raw_sequence_data_processing_method", "seq_platform" : "platform"}, inplace=True)
       sra_metadata["title"] = "Genomic sequencing of " + sra_metadata["organism"] + ": " + sra_metadata["isolation_source"]
@@ -483,7 +483,7 @@ class Table:
       gisaid_metadata["org_location"] = gisaid_metadata.apply(lambda x: x["org_location"] + " / " + x["county"] if len(x["county"]) > 0 else x["org_location"], axis=1)
 
     
-    if self.organism == "sars-cov-2":     
+    if self.organism.lower() == "sars-cov-2":     
       # add additional sc2-specific columns & any empty ones GISAID wants
       gisaid_metadata["covv_type"] = "betacoronavirus"
       gisaid_metadata["covv_passage"] = "original"
@@ -495,7 +495,7 @@ class Table:
       # format: {original : new} or {metadata_formatter : gisaid_format}
       gisaid_rename_headers = {"gisaid_virus_name" : "covv_virus_name", "org_location" : "covv_location", "additional_host_information" : "covv_add_host_info", "gisaid_submitter" : "submitter", "collection_date" : "covv_collection_date", "seq_platform" : "covv_seq_technology", "host" : "covv_host", "assembly_method" : "covv_assembly_method", self.assembly_mean_coverage_column_name : "covv_coverage", "collecting_lab" : "covv_orig_lab", "collecting_lab_address" : "covv_orig_lab_addr", "submitting_lab" : "covv_subm_lab", "submitting_lab_address" : "covv_subm_lab_addr", "authors" : "covv_authors", "purpose_of_sequencing" : "covv_sampling_strategy", "patient_gender" : "covv_gender", "patient_age" : "covv_patient_age", "patient_status" : "covv_patient_status", "specimen_source" : "covv_specimen", "outbreak" : "covv_outbreak", "last_vaccinated" : "covv_last_vaccinated", "treatment" : "covv_treatment", "consortium" : "covv_consortium"}
       
-    elif self.organism == "mpox":
+    elif self.organism.lower() == "mpox":
       # add additional mpox-specific columns
       gisaid_metadata["pox_passage"] = "original"
       
@@ -563,21 +563,20 @@ class Table:
       self.logger.error("TABLE:ENDING PROCESS! No samples were found in the table after extraction and cleaning. Check the input table and/or the excluded samples table for missing columns and populate in the table or metadata customization parameters.")
       sys.exit(1)
     
-    
     self.logger.debug("TABLE:Now creating metadata files")
     if not self.skip_ncbi:
       self.logger.debug("TABLE:NCBI submission NOT skipped, now preparing data for NCBI")
     
       self.make_biosample_csv()
       self.make_sra_csv()
-      if self.organism == "sars-cov-2":
+      if self.organism.lower() == "sars-cov-2":
         self.make_genbank_csv()
-      elif self.organism == "mpox":
+      elif self.organism.lower() == "mpox":
         self.make_bankit_src()
     
       self.logger.debug("TABLE:NCBI metadata prepared")
     
-    if self.organism != "flu":
+    if self.organism.lower() != "flu":
       self.logger.debug("TABLE:Creating GISAID metadata")
       self.make_gisaid_csv()
     
