@@ -54,8 +54,7 @@ ENV LC_ALL=C
  #  tar -xzvf v${MERCURY_VER}.tar.gz && \
   # mv -v mercury-${MERCURY_VER} /mercury
 
-RUN git clone -b kzm-mercury-dev https://github.com/theiagen/mercury.git && \
-    mv -v mercury /mercury
+RUN git clone -b kzm-mercury-dev https://github.com/theiagen/mercury.git
 
 # final working directory is /data
 WORKDIR /data
