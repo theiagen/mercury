@@ -579,7 +579,9 @@ class Table:
     if self.organism.lower() != "flu":
       self.logger.debug("TABLE:Creating GISAID metadata")
       self.make_gisaid_csv()
-    
+
+    self.table.to_csv(self.output_prefix + "_terra_table_to_upload.tsv", sep='\t', index=False)
+
     self.logger.debug("TABLE:Metadata tables made")
     
     

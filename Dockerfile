@@ -1,4 +1,4 @@
-ARG MERCURY_VER="1.1.0"
+ARG MERCURY_VER="1.1.0-dev"
 
 FROM google/cloud-sdk:480.0.0-slim
 
@@ -50,9 +50,12 @@ numpy
 ENV LC_ALL=C
 
 # copy in all of the mercury code
-RUN wget https://github.com/theiagen/mercury/archive/refs/tags/v${MERCURY_VER}.tar.gz && \
-   tar -xzvf v${MERCURY_VER}.tar.gz && \
-   mv -v mercury-${MERCURY_VER} /mercury
+#RUN wget https://github.com/theiagen/mercury/archive/refs/tags/v${MERCURY_VER}.tar.gz && \
+ #  tar -xzvf v${MERCURY_VER}.tar.gz && \
+  # mv -v mercury-${MERCURY_VER} /mercury
+
+RUN git clone -b kzm-mercury-dev https://github.com/theiagen/mercury.git && \
+    mv -v mercury /mercury
 
 # final working directory is /data
 WORKDIR /data
