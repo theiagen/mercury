@@ -45,6 +45,7 @@ google-api-python-client \
 google-cloud-storage \
 google-cloud-bigquery \
 pandas \
+tqdm \
 numpy 
 
 ENV LC_ALL=C
