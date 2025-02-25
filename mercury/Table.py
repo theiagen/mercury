@@ -89,6 +89,8 @@ class Table:
     """
     self.logger.debug("TABLE:Extracting samples from table")
     working_table = self.table[self.table[self.table_name].isin(self.samplenames)]
+    # Create a dictionary to retain the original column names
+    self.terra_columns = {col.lower(): col for col in working_table.columns}
     working_table.columns = working_table.columns.str.lower()
     self.table = working_table
     
@@ -180,7 +182,7 @@ class Table:
       self.table["gisaid_organism"] = "mpx/A"
 
     if self.organism.lower() != "flu":
-      self.logger.debug("TABLE: populating gisaid_virus_name")
+      self.logger.debug("TABLE:Populating gisaid_virus_name")
       if self.usa_territory:
         # if usa territory, use "state" (e.g., Puerto Rico) instead of country (USA)
         self.table["gisaid_virus_name"] = (self.table["gisaid_organism"] + "/" + self.table["state"] + "/" + self.table["submission_id"] + "/" + self.table["year"])
@@ -552,6 +554,18 @@ class Table:
     
     self.logger.debug("TABLE:GISAID metadata preparation complete")
 
+  def make_terra_csv(self):
+    """Create a Terra-compatible table for upload to repopulate overwritten metadata"""
+    self.logger.debug("TABLE:Creating updated Terra compatible table")
+    # Make the Terra-compatible index column ID
+    self.table.rename(columns={self.table_name : f"entity:{self.table_name}"}, inplace=True)
+    # Convert the lower-cased columns to their original format
+    self.table.rename(columns=self.terra_columns, inplace=True)
+    # Output the table to a TSV file
+    self.table.to_csv(self.output_prefix + "_terra_table_to_upload.tsv", sep='\t', index=False)
+    self.logger.debug("TABLE:Terra compatible table preparation complete")
+
+
   def process_table(self):
     self.split_metadata()
     self.extract_samples()
@@ -580,9 +594,7 @@ class Table:
       self.logger.debug("TABLE:Creating GISAID metadata")
       self.make_gisaid_csv()
 
-    self.table.rename(columns={self.table_name : f"entity:{self.table_name}"}, inplace=True)
-    self.table.to_csv(self.output_prefix + "_terra_table_to_upload.tsv", sep='\t', index=False)
-
+    self.make_terra_csv()
     self.logger.debug("TABLE:Metadata tables made")
     
     
