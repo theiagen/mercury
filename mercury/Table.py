@@ -93,11 +93,11 @@ class Table:
     self.terra_columns = {col.lower(): col for col in working_table.columns}
     working_table.columns = working_table.columns.str.lower()
     self.table = working_table
-    
-  def create_standard_variables(self):
-    """This function creates standard variables in the table
-    """
-    self.logger.debug("TABLE:Creating standard variables like date and host")
+
+  def populate_from_options(self):    
+    """This function populates the table with the options provided by the user"""
+
+    self.logger.debug("TABLE:Populating table with provided metadata")
     self.table["organism"] = self.organism
     # Overwrite preexisting inputs if these values do not evaluate to False
     if self.authors:
@@ -161,6 +161,11 @@ class Table:
       self.table["submitter_email"] = self.submitter_email
       self.logger.debug(f"TABLE:Submitter email was provided, overwriting submitter_email column with {self.submitter_email}")
 
+    
+  def create_standard_variables(self):
+    """This function creates standard variables in the table
+    """
+    self.logger.debug("TABLE:Creating standard variables like date and host")
     self.table["year"] = self.table["collection_date"].apply(lambda x: self.get_year_from_date(x))
     self.table["host"] = "Human" #(????)
     if self.skip_ncbi:
@@ -558,17 +563,20 @@ class Table:
     """Create a Terra-compatible table for upload to repopulate overwritten metadata"""
     self.logger.debug("TABLE:Creating updated Terra compatible table")
     # Make the Terra-compatible index column ID
-    self.table.rename(columns={self.table_name : f"entity:{self.table_name}"}, inplace=True)
+    terra_metadata = self.table.copy()
+    terra_metadata.rename(columns={self.table_name : f"entity:{self.table_name}"}, inplace=True)
     # Convert the lower-cased columns to their original format
-    self.table.rename(columns=self.terra_columns, inplace=True)
+    terra_metadata.rename(columns=self.terra_columns, inplace=True)
     # Output the table to a TSV file
-    self.table.to_csv(self.output_prefix + "_terra_table_to_upload.tsv", sep='\t', index=False)
+    terra_metadata.to_csv(self.output_prefix + "_terra_table_to_upload.tsv", sep='\t', index=False)
     self.logger.debug("TABLE:Terra compatible table preparation complete")
 
 
   def process_table(self):
     self.split_metadata()
     self.extract_samples()
+    self.populate_from_options()
+    self.make_terra_csv()
     self.create_standard_variables()
     self.perform_quality_check()
     self.remove_nas()
@@ -594,7 +602,6 @@ class Table:
       self.logger.debug("TABLE:Creating GISAID metadata")
       self.make_gisaid_csv()
 
-    self.make_terra_csv()
     self.logger.debug("TABLE:Metadata tables made")
     
     
