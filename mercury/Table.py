@@ -219,8 +219,6 @@ class Table:
       self.logger.debug("TABLE:  Missing metadata: " + ', '.join(list(excluded_samples.columns)))
       self.logger.debug("TABLE:  Excluded samples: " + ', '.join(list(excluded_samples.index)))
 
-     
-
     
   def perform_quality_check(self):
     """This function removes samples based on the number of VADR alerts and the number of Ns (for "sars-cov-2" only) and writes them to a file
