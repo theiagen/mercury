@@ -96,7 +96,6 @@ class Table:
 
   def populate_from_options(self):    
     """This function populates the table with the options provided by the user"""
-
     self.logger.debug("TABLE:Populating table with provided metadata")
     self.table["organism"] = self.organism
     # Overwrite preexisting inputs if these values do not evaluate to False
@@ -214,6 +213,14 @@ class Table:
     with open(self.exclusion_table_name, "a") as exclusions:
       exclusions.write("\nSamples excluded for missing required metadata (will have empty values in indicated columns):\n")
     excluded_samples.to_csv(self.exclusion_table_name, mode='a', sep='\t')
+    # print out the samples that were removed if they exist
+    if len(excluded_samples) > 0:
+      self.logger.debug("TABLE:Removed samples with missing required metadata:")
+      self.logger.debug("TABLE:  Missing metadata: " + ', '.join(list(excluded_samples.columns)))
+      self.logger.debug("TABLE:  Excluded samples: " + ', '.join(list(excluded_samples.index)))
+
+     
+
     
   def perform_quality_check(self):
     """This function removes samples based on the number of VADR alerts and the number of Ns (for "sars-cov-2" only) and writes them to a file
