@@ -1,4 +1,4 @@
-ARG MERCURY_VER="1.0.9"
+ARG MERCURY_VER="1.1.0"
 
 FROM google/cloud-sdk:480.0.0-slim
 
@@ -45,11 +45,12 @@ google-api-python-client \
 google-cloud-storage \
 google-cloud-bigquery \
 pandas \
+tqdm \
 numpy 
 
 ENV LC_ALL=C
 
-# copy in all of the tb-profiler-parsing code
+# copy in all of the mercury code
 RUN wget https://github.com/theiagen/mercury/archive/refs/tags/v${MERCURY_VER}.tar.gz && \
    tar -xzvf v${MERCURY_VER}.tar.gz && \
    mv -v mercury-${MERCURY_VER} /mercury
@@ -57,8 +58,8 @@ RUN wget https://github.com/theiagen/mercury/archive/refs/tags/v${MERCURY_VER}.t
 # final working directory is /data
 WORKDIR /data
 
-# put broadinstitute/terra-tools scripts onto the PATH
-ENV PATH=${PATH}:/scripts
+# put broadinstitute/terra-tools & mercury scripts onto the PATH
+ENV PATH=${PATH}:/scripts:/mercury/mercury
 
 # check that we have stuff installed
-RUN gcloud storage --help && pip3 list && python3 /mercury/mercury/mercury.py --help
+RUN gcloud storage --help && pip3 list && mercury.py --help

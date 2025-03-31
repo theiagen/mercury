@@ -24,7 +24,7 @@ def main():
                       help="The prefix for the output files\ndefault=\"mercury\"", default="mercury", metavar="\b", type=str)
   parser.add_argument("-b", "--gcp_bucket_uri",
                       help="The GCP bucket URI to store the temporarily store the read files (required)", metavar="\b", required=True, type=str)
-  
+
   submission_type_arguments = parser.add_argument_group("submission type arguments", "options that determine submission type")
   submission_type_arguments.add_argument("--organism", 
                                          help="The organism type of the samples in the table\ndefault=\"sars-cov-2\"", default="sars-cov-2", metavar="\b", type=str)
@@ -42,6 +42,26 @@ def main():
                                        help="Add if using reads_dehosted instead of clearlabs data", action="store_true", default=False)
   customization_arguments.add_argument("--single_end",
                                       help="Add if the data is single-end", action="store_true", default=False)
+  customization_arguments.add_argument("--authors", help="Authors of the study", nargs="*")
+  customization_arguments.add_argument("--bioproject_accession", help="Bioproject accession number", nargs="*")
+  customization_arguments.add_argument("--continent", help="Continent of the sample", nargs="*")
+  customization_arguments.add_argument("--country", help="Country of the sample", nargs="*")
+  customization_arguments.add_argument("--host_disease", help="Disease of the host", nargs="*")
+  customization_arguments.add_argument("--isolation_source", help="Source of isolation", nargs="*")
+  customization_arguments.add_argument("--library_selection", help="Library selection method", nargs="*")
+  customization_arguments.add_argument("--library_source", help="Library source", nargs="*")
+  customization_arguments.add_argument("--library_strategy", help="Library strategy", nargs="*")
+  customization_arguments.add_argument("--purpose_of_sequencing", help="Purpose of sequencing", nargs="*")
+  customization_arguments.add_argument("--state", help="State of the sample", nargs="*")
+  customization_arguments.add_argument("--submitting_lab", help="Submitting laboratory", nargs="*")
+  customization_arguments.add_argument("--submitting_lab_address", help="Address of the submitting laboratory", nargs="*")
+  customization_arguments.add_argument("--amplicon_primer_scheme", help="Amplicon primer scheme", nargs="*")
+  customization_arguments.add_argument("--amplicon_size", help="Amplicon size", nargs="*")
+  customization_arguments.add_argument("--instrument_model", help="Instrument model", nargs="*")
+  customization_arguments.add_argument("--library_layout", help="Library layout", nargs="*")
+  customization_arguments.add_argument("--seq_platform", help="Sequencing platform", nargs="*")
+  customization_arguments.add_argument("--gisaid_submitter", help="GISAID submitter", nargs="*")
+  customization_arguments.add_argument("--submitter_email", help="Submitter email", nargs="*")
   
   qc_arguments = parser.add_argument_group("quality control arguments", "options that control quality thresholds (currently only for SARS-CoV-2 samples)")
   qc_arguments.add_argument("-a", "--vadr_alert_limit",

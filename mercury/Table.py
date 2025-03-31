@@ -9,7 +9,13 @@ class Table:
   """This class controls the manipulation of the table
   """
   
-  def __init__(self, logger, organism, input_table, table_name, samplenames, skip_county, skip_ncbi, usa_territory, metadata_list, vadr_alert_limit, number_n_threshold, assembly_fasta_column_name, output_prefix, gcp_bucket_uri, single_end, read1_column_name,  assembly_mean_coverage_column_name, read2_column_name=""):
+  def __init__(self, logger, organism, input_table, table_name, samplenames, skip_county, skip_ncbi, 
+               usa_territory, metadata_list, vadr_alert_limit, number_n_threshold, assembly_fasta_column_name, 
+               output_prefix, gcp_bucket_uri, single_end, read1_column_name, assembly_mean_coverage_column_name, 
+               authors, bioproject_accession, continent, country, host_disease, isolation_source, library_selection, 
+               library_source, library_strategy, purpose_of_sequencing, state, submitting_lab, submitting_lab_address, 
+               amplicon_primer_scheme, amplicon_size, instrument_model, library_layout, seq_platform, 
+               gisaid_submitter, submitter_email, read2_column_name=""):
     self.logger = logger
     self.logger.debug("TABLE:Initializing Table class")
     
@@ -34,8 +40,29 @@ class Table:
 
     self.gcp_bucket_uri = gcp_bucket_uri
     self.single_end = single_end
+    self.authors = authors
+    self.bioproject_accession = bioproject_accession
+    self.continent = continent
+    self.country = country
+    self.host_disease = host_disease
+    self.isolation_source = isolation_source
+    self.library_selection = library_selection
+    self.library_source = library_source
+    self.library_strategy = library_strategy
+    self.purpose_of_sequencing = purpose_of_sequencing
+    self.state = state
+    self.submitting_lab = submitting_lab
+    self.submitting_lab_address = submitting_lab_address
+    self.amplicon_primer_scheme = amplicon_primer_scheme
+    self.amplicon_size = amplicon_size
+    self.instrument_model = instrument_model
+    self.library_layout = library_layout
+    self.seq_platform = seq_platform
+    self.gisaid_submitter = gisaid_submitter
+    self.submitter_email = submitter_email
+
     # transform the input table into a pandas dataframe
-    self.logger.debug("TABLE:Loading input table")
+    self.logger.debug(f"TABLE:Loading input table {self.input_table}")
     self.table = pd.read_csv(self.input_table, sep="\t", header=0, dtype={self.table_name: 'str'})
 
   def get_year_from_date(self, date):
@@ -62,8 +89,77 @@ class Table:
     """
     self.logger.debug("TABLE:Extracting samples from table")
     working_table = self.table[self.table[self.table_name].isin(self.samplenames)]
+    # Create a dictionary to retain the original column names
+    self.terra_columns = {col.lower(): col for col in working_table.columns}
     working_table.columns = working_table.columns.str.lower()
     self.table = working_table
+
+  def populate_from_options(self):    
+    """This function populates the table with the options provided by the user"""
+    self.logger.debug("TABLE:Populating table with provided metadata")
+    self.table["organism"] = self.organism
+    # Overwrite preexisting inputs if these values do not evaluate to False
+    if self.authors:
+      self.table["authors"] = self.authors
+      self.logger.debug(f"TABLE:Authors were provided, overwriting authors column with {self.authors}")
+    if self.bioproject_accession:
+      self.table["bioproject_accession"] = self.bioproject_accession
+      self.logger.debug(f"TABLE:BioProject accession was provided, overwriting BioProject accession column with {self.bioproject_accession}")
+    if self.continent:
+      self.table["continent"] = self.continent
+      self.logger.debug(f"TABLE:Continent was provided, overwriting continent column with {self.continent}")
+    if self.country:
+      self.table["country"] = self.country
+      self.logger.debug(f"TABLE:Country was provided, overwriting country column with {self.country}")
+    if self.host_disease:
+      self.table["host_disease"] = self.host_disease
+      self.logger.debug(f"TABLE:Host disease was provided, overwriting host_disease column with {self.host_disease}")
+    if self.isolation_source:
+      self.table["isolation_source"] = self.isolation_source
+      self.logger.debug(f"TABLE:Isolation source was provided, overwriting isolation_source column with {self.isolation_source}")
+    if self.library_selection:
+      self.table["library_selection"] = self.library_selection
+      self.logger.debug(f"TABLE:Library selection was provided, overwriting library_selection column with {self.library_selection}")
+    if self.library_source:
+      self.table["library_source"] = self.library_source
+      self.logger.debug(f"TABLE:Library source was provided, overwriting library_source column with {self.library_source}")
+    if self.library_strategy:
+      self.table["library_strategy"] = self.library_strategy
+      self.logger.debug(f"TABLE:Library strategy was provided, overwriting library_strategy column with {self.library_strategy}")
+    if self.purpose_of_sequencing:
+      self.table["purpose_of_sequencing"] = self.purpose_of_sequencing
+      self.logger.debug(f"TABLE:Purpose of sequencing was provided, overwriting purpose_of_sequencing column with {self.purpose_of_sequencing}")
+    if self.state:
+      self.table["state"] = self.state
+      self.logger.debug(f"TABLE:State was provided, overwriting state column with {self.state}")
+    if self.submitting_lab:
+      self.table["submitting_lab"] = self.submitting_lab
+      self.logger.debug(f"TABLE:Submitting lab was provided, overwriting submitting_lab column with {self.submitting_lab}")
+    if self.submitting_lab_address:
+      self.table["submitting_lab_address"] = self.submitting_lab_address
+      self.logger.debug(f"TABLE:Submitting lab address was provided, overwriting submitting_lab_address column with {self.submitting_lab_address}")
+    if self.amplicon_primer_scheme:
+      self.table["amplicon_primer_scheme"] = self.amplicon_primer_scheme
+      self.logger.debug(f"TABLE:Amplicon primer scheme was provided, overwriting amplicon_primer_scheme column with {self.amplicon_primer_scheme}")
+    if self.amplicon_size:
+      self.table["amplicon_size"] = self.amplicon_size
+      self.logger.debug(f"TABLE:Amplicon size was provided, overwriting amplicon_size column with {self.amplicon_size}")
+    if self.instrument_model:
+      self.table["instrument_model"] = self.instrument_model
+      self.logger.debug(f"TABLE:Instrument model was provided, overwriting instrument_model column with {self.instrument_model}")
+    if self.library_layout:
+      self.table["library_layout"] = self.library_layout
+      self.logger.debug(f"TABLE:Library layout was provided, overwriting library_layout column with {self.library_layout}")
+    if self.seq_platform:
+      self.table["seq_platform"] = self.seq_platform
+      self.logger.debug(f"TABLE:Sequencing platform was provided, overwriting seq_platform column with {self.seq_platform}")
+    if self.gisaid_submitter:
+      self.table["gisaid_submitter"] = self.gisaid_submitter
+      self.logger.debug(f"TABLE:GISAID submitter was provided, overwriting gisaid_submitter column with {self.gisaid_submitter}")
+    if self.submitter_email:
+      self.table["submitter_email"] = self.submitter_email
+      self.logger.debug(f"TABLE:Submitter email was provided, overwriting submitter_email column with {self.submitter_email}")
+
     
   def create_standard_variables(self):
     """This function creates standard variables in the table
@@ -78,25 +174,26 @@ class Table:
       self.table["host_sci_name"] = "Homo sapiens"
       self.table["filetype"] = "fastq"
       
-      if self.organism != "flu":
+      if self.organism.lower() != "flu":
         self.table["isolate"] = (self.table["organism"] + "/" + self.table["host"] + "/" + self.table["country"] + "/" + self.table["submission_id"] + "/" + self.table["year"])
       
       self.table["biosample_accession"] = "{populate_with_BioSample_accession}"
       self.table["design_description"] = "Whole genome sequencing of " + self.table["organism"] 
     
-    if self.organism == "sars-cov-2":
+    if self.organism.lower() == "sars-cov-2":
       self.table["gisaid_organism"] = "hCoV-19"
-    elif self.organism == "mpox":
+    elif self.organism.lower() == "mpox":
       self.table["gisaid_organism"] = "mpx/A"
 
-    if self.organism != "flu":
+    if self.organism.lower() != "flu":
+      self.logger.debug("TABLE:Populating gisaid_virus_name")
       if self.usa_territory:
         # if usa territory, use "state" (e.g., Puerto Rico) instead of country (USA)
         self.table["gisaid_virus_name"] = (self.table["gisaid_organism"] + "/" + self.table["state"] + "/" + self.table["submission_id"] + "/" + self.table["year"])
       else: 
         self.table["gisaid_virus_name"] = (self.table["gisaid_organism"] + "/" + self.table["country"] + "/" + self.table["submission_id"] + "/" + self.table["year"])
+
       
-    
   def remove_nas(self):
     """This function removes rows with missing values in the required metadata columns and writes them to a file
     """
@@ -116,6 +213,12 @@ class Table:
     with open(self.exclusion_table_name, "a") as exclusions:
       exclusions.write("\nSamples excluded for missing required metadata (will have empty values in indicated columns):\n")
     excluded_samples.to_csv(self.exclusion_table_name, mode='a', sep='\t')
+    # print out the samples that were removed if they exist
+    if len(excluded_samples) > 0:
+      self.logger.debug("TABLE:Removed samples with missing required metadata:")
+      self.logger.debug("TABLE:  Missing metadata: " + ', '.join(list(excluded_samples.columns)))
+      self.logger.debug("TABLE:  Excluded samples: " + ', '.join(list(excluded_samples.index)))
+
     
   def perform_quality_check(self):
     """This function removes samples based on the number of VADR alerts and the number of Ns (for "sars-cov-2" only) and writes them to a file
@@ -154,15 +257,15 @@ class Table:
       self.gisaid_required, self.gisaid_optional = temp_required_metadata[0], temp_optional_metadata[0]
     else:
       self.logger.debug("TABLE:NCBI submission not skipped, keeping NCBI-specific metadata requirements")
-      if self.organism == "sars-cov-2":
+      if self.organism.lower() == "sars-cov-2":
         self.biosample_required, self.sra_required, self.genbank_required, self.gisaid_required = temp_required_metadata[0], temp_required_metadata[1], temp_required_metadata[2], temp_required_metadata[3]
         self.biosample_optional, self.sra_optional, self.genbank_optional, self.gisaid_optional = temp_optional_metadata[0], temp_optional_metadata[1], temp_optional_metadata[2], temp_optional_metadata[3]
         
-      elif self.organism == "flu":
+      elif self.organism.lower() == "flu":
         self.biosample_required, self.sra_required = temp_required_metadata[0], temp_required_metadata[1]
         self.biosample_optional, self.sra_optional = temp_optional_metadata[0], temp_optional_metadata[1]
       
-      elif self.organism == "mpox":
+      elif self.organism.lower() == "mpox":
         self.biosample_required, self.sra_required, self.bankit_required, self.gisaid_required = temp_required_metadata[0], temp_required_metadata[1], temp_required_metadata[2], temp_required_metadata[3]
         self.biosample_optional, self.sra_optional, self.bankit_optional, self.gisaid_required = temp_optional_metadata[0], temp_optional_metadata[1], temp_optional_metadata[2], temp_optional_metadata[3]
 
@@ -194,15 +297,15 @@ class Table:
 
     biosample_metadata.rename(columns={"submission_id" : "sample_name"}, inplace=True)
     
-    if self.organism == "mpox" or self.organism == "sars-cov-2":
+    if self.organism.lower() in {"mpox", "sars-cov-2"}:
       biosample_metadata["geo_loc_name"] = biosample_metadata["country"] + ": " + biosample_metadata["state"]
       biosample_metadata.drop(["country", "state"], axis=1, inplace=True)
 
       biosample_metadata.rename(columns={"collecting_lab" : "collected_by", "host_sci_name" : "host", "patient_gender" : "host_sex", "patient_age" : "host_age"}, inplace=True)      
-      if self.organism == "sars-cov-2":
+      if self.organism.lower() == "sars-cov-2":
         biosample_metadata.rename(columns={"treatment" : "antiviral_treatment_agent"}, inplace=True)
     # Flu only: when user does not supply isolate or strain metadata columns, create "isolate" column using the syntax below
-    elif self.organism == "flu" and user_supplied_isolate_or_strain == False :
+    elif self.organism.lower() == "flu" and user_supplied_isolate_or_strain == False :
       # type/state/submission_id/year (subtype)
       # strip off "Type_" from beginning of Type, e.g. "Type_A" -> "A"
       self.logger.debug("DEBUG:User did not supply isolate or strain metadata columns, creating isolate column for Flu samples now...")
@@ -229,7 +332,7 @@ class Table:
         
     sra_metadata.rename(columns={"submission_id" : "sample_name", "library_id" : "library_ID"}, inplace=True)
   
-    if self.organism != "flu":
+    if self.organism.lower() != "flu":
       # these columns are named differently in the mercury metadata preparation spreadsheets 
       sra_metadata.rename(columns={"amplicon_primer_scheme" : "amplicon_PCR_primer_scheme", "submitter_email" : "sequence_submitter_contact_email", "assembly_method" : "raw_sequence_data_processing_method", "seq_platform" : "platform"}, inplace=True)
       sra_metadata["title"] = "Genomic sequencing of " + sra_metadata["organism"] + ": " + sra_metadata["isolation_source"]
@@ -374,6 +477,7 @@ class Table:
     
     for column in self.gisaid_optional:
       if column in self.table.columns:
+        self.logger.debug("TABLE:Adding column " + column + " to GISAID metadata")
         gisaid_metadata[column] = self.table[column]
       else:
         gisaid_metadata[column] = ""
@@ -391,7 +495,7 @@ class Table:
       gisaid_metadata["org_location"] = gisaid_metadata.apply(lambda x: x["org_location"] + " / " + x["county"] if len(x["county"]) > 0 else x["org_location"], axis=1)
 
     
-    if self.organism == "sars-cov-2":     
+    if self.organism.lower() == "sars-cov-2":     
       # add additional sc2-specific columns & any empty ones GISAID wants
       gisaid_metadata["covv_type"] = "betacoronavirus"
       gisaid_metadata["covv_passage"] = "original"
@@ -403,7 +507,7 @@ class Table:
       # format: {original : new} or {metadata_formatter : gisaid_format}
       gisaid_rename_headers = {"gisaid_virus_name" : "covv_virus_name", "org_location" : "covv_location", "additional_host_information" : "covv_add_host_info", "gisaid_submitter" : "submitter", "collection_date" : "covv_collection_date", "seq_platform" : "covv_seq_technology", "host" : "covv_host", "assembly_method" : "covv_assembly_method", self.assembly_mean_coverage_column_name : "covv_coverage", "collecting_lab" : "covv_orig_lab", "collecting_lab_address" : "covv_orig_lab_addr", "submitting_lab" : "covv_subm_lab", "submitting_lab_address" : "covv_subm_lab_addr", "authors" : "covv_authors", "purpose_of_sequencing" : "covv_sampling_strategy", "patient_gender" : "covv_gender", "patient_age" : "covv_patient_age", "patient_status" : "covv_patient_status", "specimen_source" : "covv_specimen", "outbreak" : "covv_outbreak", "last_vaccinated" : "covv_last_vaccinated", "treatment" : "covv_treatment", "consortium" : "covv_consortium"}
       
-    elif self.organism == "mpox":
+    elif self.organism.lower() == "mpox":
       # add additional mpox-specific columns
       gisaid_metadata["pox_passage"] = "original"
       
@@ -460,17 +564,31 @@ class Table:
     
     self.logger.debug("TABLE:GISAID metadata preparation complete")
 
+  def make_terra_csv(self):
+    """Create a Terra-compatible table for upload to repopulate overwritten metadata"""
+    self.logger.debug("TABLE:Creating updated Terra compatible table")
+    # Make the Terra-compatible index column ID
+    terra_metadata = self.table.copy()
+    terra_metadata.rename(columns={self.table_name : f"entity:{self.table_name}"}, inplace=True)
+    # Convert the lower-cased columns to their original format
+    terra_metadata.rename(columns=self.terra_columns, inplace=True)
+    # Output the table to a TSV file
+    terra_metadata.to_csv(self.output_prefix + "_terra_table_to_upload.tsv", sep='\t', index=False)
+    self.logger.debug("TABLE:Terra compatible table preparation complete")
+
+
   def process_table(self):
     self.split_metadata()
     self.extract_samples()
+    self.populate_from_options()
+    self.make_terra_csv()
     self.create_standard_variables()
     self.perform_quality_check()
     self.remove_nas()
     
     if self.table.empty:
-      self.logger.error("TABLE:ENDING PROCESS! No samples were found in the table after extraction and cleaning. Check the input table and/or the excluded samples table and try again.")
+      self.logger.error("TABLE:ENDING PROCESS! No samples were found in the table after extraction and cleaning. Check the input table and/or the excluded samples table for missing columns and populate in the table or metadata customization parameters.")
       sys.exit(1)
-    
     
     self.logger.debug("TABLE:Now creating metadata files")
     if not self.skip_ncbi:
@@ -478,17 +596,17 @@ class Table:
     
       self.make_biosample_csv()
       self.make_sra_csv()
-      if self.organism == "sars-cov-2":
+      if self.organism.lower() == "sars-cov-2":
         self.make_genbank_csv()
-      elif self.organism == "mpox":
+      elif self.organism.lower() == "mpox":
         self.make_bankit_src()
     
       self.logger.debug("TABLE:NCBI metadata prepared")
     
-    if self.organism != "flu":
+    if self.organism.lower() != "flu":
       self.logger.debug("TABLE:Creating GISAID metadata")
       self.make_gisaid_csv()
-    
+
     self.logger.debug("TABLE:Metadata tables made")
     
     

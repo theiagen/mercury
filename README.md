@@ -8,7 +8,7 @@ Important note: Mercury was designed to work with metadata tables that were proc
 
 For all organisms:
 
-1. Required & optional metadata fields are retrieved from the `Metadata.py` file, dependent on the optional `--organism` and `--skip_ncbi` arguments.
+1. Required & optional metadata fields are retrieved from the `Metadata.py` file, dependent on the optional `--organism` and `--skip_ncbi` arguments. There are additional metadata customization arguments that will overwrite the populate all inputs for the column the argument references.
 2. The input TSV file is read (from the positional `input_table` and `table_name` argument) and the required/optional metadata is extracted for only the samples specified in the postiional `samplenames` argument.
 3. The metadata is formatted according to the requirements of each database, dependent on the specified `--organism` argument.
 4. If SRA submission is not skipped (if `--skip_ncbi` is indicated), the sequencing read files (fastq files) are uploaded to a Google Cloud Storage bucket (specified by `--gcp_bucket_uri`) for temporary storage until they can be retrieved by NCBI (specifically, SRA) during submission.
@@ -27,16 +27,16 @@ Default databases by organism:
 We highly recommend using the following Docker image to run Mercury:
 
 ```bash
-docker pull us-docker.pkg.dev/general-theiagen/theiagen/mercury:1.0.9
+docker pull us-docker.pkg.dev/general-theiagen/theiagen/mercury:1.1.0
 ```
 
 The entrypoint for this Docker image is the Mercury help message. To run this container interactively, use the following command:
 
 ```bash
-docker run -it --entrypoint=/bin/bash us-docker.pkg.dev/general-theiagen/theiagen/mercury:1.0.9
+docker run -it --entrypoint=/bin/bash us-docker.pkg.dev/general-theiagen/theiagen/mercury:1.1.0
 # Once inside the container interactively, you can run the mercury tool
-python3 /mercury/mercury/mercury.py -v
-# v1.0.9
+mercury.py -v
+# v1.1.0
 ```
 
 ### Locally with Python
@@ -128,6 +128,110 @@ logging arguments:
   --debug
           Add to enable debug logging; overwrites --verbose
 
+Please contact support@theiagen.com or sage.wright@theiagen.com with any questionsusage: python3 /mercury/mercury/mercury.py <input_table.tsv> <table_name> <samplenames> [<args>]
+
+Mercury prepares and formats metadata for submission to national & international genomic databases
+
+positional arguments:
+  input_table
+          The table containing the metadata for the samples to be submitted
+  table_name
+          The name of the first column in the table (A1); include the `_id` if data table is downloaded from Terra.bio
+  samplenames
+          The sample names to be extracted from the table
+
+options:
+  -h, --help
+          show this help message and exit
+  -v, --version
+          show program's version number and exit
+  -o, --output_prefix 
+          The prefix for the output files
+          default="mercury"
+  -b, --gcp_bucket_uri 
+          The GCP bucket URI to store the temporarily store the read files (required)
+
+submission type arguments:
+  options that determine submission type
+
+  --organism 
+          The organism type of the samples in the table
+          default="sars-cov-2"
+  --skip_ncbi
+          Add to skip NCBI metadata preparation; prep only for GISAID submission
+
+metadata customization arguments:
+  options that customize the metadata configuration
+
+  --skip_county
+          Add to skip adding county to location in GISAID metadata
+  --usa_territory
+          Add if the country is a USA territory to use the territory name in the state column
+  --using_clearlabs_data
+          Add if using Clearlabs-generated data and metrics
+  --using_reads_dehosted
+          Add if using reads_dehosted instead of clearlabs data
+  --single_end
+          Add if the data is single-end
+  --authors [AUTHORS]
+          Authors of the study
+  --bioproject_accession [BIOPROJECT_ACCESSION]
+          Bioproject accession number
+  --continent [CONTINENT]
+          Continent of the sample
+  --country [COUNTRY]
+          Country of the sample
+  --host_disease [HOST_DISEASE]
+          Disease of the host
+  --isolation_source [ISOLATION_SOURCE]
+          Source of isolation
+  --library_selection [LIBRARY_SELECTION]
+          Library selection method
+  --library_source [LIBRARY_SOURCE]
+          Library source
+  --library_strategy [LIBRARY_STRATEGY]
+          Library strategy
+  --purpose_of_sequencing [PURPOSE_OF_SEQUENCING]
+          Purpose of sequencing
+  --state [STATE]
+          State of the sample
+  --submitting_lab [SUBMITTING_LAB]
+          Submitting laboratory
+  --submitting_lab_address [SUBMITTING_LAB_ADDRESS]
+          Address of the submitting laboratory
+  --amplicon_primer_scheme [AMPLICON_PRIMER_SCHEME]
+          Amplicon primer scheme
+  --amplicon_size [AMPLICON_SIZE]
+          Amplicon size
+  --instrument_model [INSTRUMENT_MODEL]
+          Instrument model
+  --library_layout [LIBRARY_LAYOUT]
+          Library layout
+  --seq_platform [SEQ_PLATFORM]
+          Sequencing platform
+  --gisaid_submitter [GISAID_SUBMITTER]
+          GISAID submitter
+  --submitter_email [SUBMITTER_EMAIL]
+          Submitter email
+
+quality control arguments:
+  options that control quality thresholds (currently only for SARS-CoV-2 samples)
+
+  -a, --vadr_alert_limit 
+          The maximum number of VADR alerts allowed for SARS-CoV-2 samples
+          default=0
+  -n, --number_n_threshold 
+          The maximum number of Ns allowed in SARS-CoV-2 assemblies
+          default=5000
+
+logging arguments:
+  options that change the verbosity of the stdout logging
+
+  --verbose
+          Add to enable verbose logging
+  --debug
+          Add to enable debug logging; overwrites --verbose
+
 Please contact support@theiagen.com or sage.wright@theiagen.com with any questions
 ```
 
@@ -164,6 +268,26 @@ These arguments customize the configuration of the required and/or optional meta
 - `--using_clearlabs_data`: Add if using Clearlabs-generated data and metrics
 - `--using_reads_dehosted`: Add if using reads_dehosted instead of clearlabs data
 - `--single_end`: Add if the data is single-end; this ensures that the `read2` column is not included in the metadata
+- `--authors`: Add and populate to overwrite `authors` column with input
+- `--bioproject_accession`: Add and populate to overwrite `bioproject_accession` column with input
+- `--continent`: Add and populate to overwrite `continent` column with input
+- `--country`: Add and populate to overwrite `country` column with input
+- `--host_disease`: Add and populate to overwrite `host_disease` column with input
+- `--isolation_source`: Add and populate to overwrite `isolation_source` column with input
+- `--library_selection`: Add and populate to overwrite `library_selection` column with input
+- `--library_source`: Add and populate to overwrite `library_source` column with input
+- `--library_strategy`: Add and populate to overwrite `library_strategy` column with input
+- `--purpose_of_sequencing`: Add and populate to overwrite `purpose_of_sequencing` column with input
+- `--state`: Add and populate to overwrite `state` column with input
+- `--submitting_lab`: Add and populate to overwrite `submitting_lab` column with input
+- `--submitting_lab_address`: Add and populate to overwrite `submitting_lab_address` column with input
+- `--amplicon_primer_scheme`: Add and populate to overwrite `amplicon_primer_scheme` column with input
+- `--amplicon_size`: Add and populate to overwrite `amplicon_size` column with input
+- `--instrument_model`: Add and populate to overwrite `instrument_model` column with input
+- `--library_layout`: Add and populate to overwrite `library_layout` column with input
+- `--seq_platform`: Add and populate to overwrite `seq_platform` column with input
+- `--gisaid_submitter`: Add and populate to overwrite `gisaid_submitter` column with input
+- `--submitter_email`: Add and populate to overwrite `submitter_email` column with input
 
 #### A note on `--using_clearlabs_data` & `--using_reads_dehosted` 
 
