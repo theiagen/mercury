@@ -62,6 +62,7 @@ def main():
   customization_arguments.add_argument("--seq_platform", help="Sequencing platform", nargs="*")
   customization_arguments.add_argument("--gisaid_submitter", help="GISAID submitter", nargs="*")
   customization_arguments.add_argument("--submitter_email", help="Submitter email", nargs="*")
+  customization_arguments.add_argument("--metadata_organism", help ="Organism name for metadata population", nargs="*")
   
   qc_arguments = parser.add_argument_group("quality control arguments", "options that control quality thresholds (currently only for SARS-CoV-2 samples)")
   qc_arguments.add_argument("-a", "--vadr_alert_limit",
