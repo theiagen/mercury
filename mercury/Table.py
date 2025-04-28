@@ -100,6 +100,7 @@ class Table:
     self.logger.debug("TABLE:Populating table with provided metadata")
     if self.metadata_organism:
       self.table["organism"] = self.metadata_organism
+      self.logger.debug(f"TABLE:Metadata organism was provided, overwriting organism column with {self.metadata_organism}")
     # Overwrite preexisting inputs if these values do not evaluate to False
     if self.authors:
       self.table["authors"] = self.authors
