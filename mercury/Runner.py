@@ -31,6 +31,7 @@ class Runner:
     self.reads_dehosted = options.using_reads_dehosted
     self.vadr_alert_limit = options.vadr_alert_limit
     self.number_n_threshold = options.number_n_threshold
+    self.metadata_organism = options.metadata_organism
     
     # set the data file names
     self.read1_column_name = "read1_dehosted"
@@ -72,6 +73,7 @@ class Runner:
     self.seq_platform = " ".join(options.seq_platform)
     self.gisaid_submitter = " ".join(options.gisaid_submitter)
     self.submitter_email = " ".join(options.submitter_email)
+    self.metadata_organism = " ".join(options.metadata_organism)
 
 
   def check_gcloud_dependency(self):
@@ -108,7 +110,7 @@ class Runner:
                   self.isolation_source, self.library_selection, self.library_source, self.library_strategy, 
                   self.purpose_of_sequencing, self.state, self.submitting_lab, self.submitting_lab_address, 
                   self.amplicon_primer_scheme, self.amplicon_size, self.instrument_model, self.library_layout, self.seq_platform, 
-                  self.gisaid_submitter, self.submitter_email, self.read2_column_name)
+                  self.gisaid_submitter, self.submitter_email, self.metadata_organism, self.read2_column_name)
     table.process_table()
       
     self.logger.info("RUNNER:Done!")

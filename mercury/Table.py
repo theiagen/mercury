@@ -15,7 +15,7 @@ class Table:
                authors, bioproject_accession, continent, country, host_disease, isolation_source, library_selection, 
                library_source, library_strategy, purpose_of_sequencing, state, submitting_lab, submitting_lab_address, 
                amplicon_primer_scheme, amplicon_size, instrument_model, library_layout, seq_platform, 
-               gisaid_submitter, submitter_email, read2_column_name=""):
+               gisaid_submitter, submitter_email, metadata_organism, read2_column_name=""):
     self.logger = logger
     self.logger.debug("TABLE:Initializing Table class")
     
@@ -60,6 +60,7 @@ class Table:
     self.seq_platform = seq_platform
     self.gisaid_submitter = gisaid_submitter
     self.submitter_email = submitter_email
+    self.metadata_organism = metadata_organism
 
     # transform the input table into a pandas dataframe
     self.logger.debug(f"TABLE:Loading input table {self.input_table}")
@@ -97,7 +98,9 @@ class Table:
   def populate_from_options(self):    
     """This function populates the table with the options provided by the user"""
     self.logger.debug("TABLE:Populating table with provided metadata")
-    self.table["organism"] = self.organism
+    if self.metadata_organism:
+      self.table["organism"] = self.metadata_organism
+      self.logger.debug(f"TABLE:Metadata organism was provided, overwriting organism column with {self.metadata_organism}")
     # Overwrite preexisting inputs if these values do not evaluate to False
     if self.authors:
       self.table["authors"] = self.authors
