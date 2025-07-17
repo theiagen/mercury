@@ -270,7 +270,7 @@ class Table:
       
       elif self.organism.lower() == "mpox":
         self.biosample_required, self.sra_required, self.bankit_required, self.gisaid_required = temp_required_metadata[0], temp_required_metadata[1], temp_required_metadata[2], temp_required_metadata[3]
-        self.biosample_optional, self.sra_optional, self.bankit_optional, self.gisaid_required = temp_optional_metadata[0], temp_optional_metadata[1], temp_optional_metadata[2], temp_optional_metadata[3]
+        self.biosample_optional, self.sra_optional, self.bankit_optional, self.gisaid_optional = temp_optional_metadata[0], temp_optional_metadata[1], temp_optional_metadata[2], temp_optional_metadata[3]
 
     self.required_metadata = [item for group in temp_required_metadata for item in group]
     if self.skip_ncbi:
