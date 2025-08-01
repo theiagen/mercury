@@ -186,7 +186,7 @@ class Table:
     if self.organism.lower() == "sars-cov-2":
       self.table["gisaid_organism"] = "hCoV-19"
     elif self.organism.lower() == "mpox":
-      self.table["gisaid_organism"] = "mpx/A"
+      self.table["gisaid_organism"] = "hMpxV"
 
     if self.organism.lower() != "flu":
       self.logger.debug("TABLE:Populating gisaid_virus_name")
