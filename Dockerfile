@@ -1,4 +1,4 @@
-ARG MERCURY_VER="1.1.2"
+ARG MERCURY_VER="1.1.3"
 
 FROM google/cloud-sdk:480.0.0-slim
 
