@@ -437,7 +437,7 @@ class Table:
         bankit_metadata[column] = self.table[column]
       else:
         bankit_metadata[column] = ""
-    bankit_metadata.rename(columns={"submission_id" : "Sequence_ID", "isolate" : "Isolate", "collection_date" : "Collection_date", "country" : "Country", "host" : "Host", "isolation_source" : "Isolation_source", "biosample_accession" : "Biosample_accession", "bioproject_accession" : "Bioproject_accession"}, inplace=True)
+    bankit_metadata.rename(columns={"submission_id" : "Sequence_ID", "isolate" : "Isolate", "collection_date" : "Collection_date", "country" : "Country", "host" : "Host", "isolation_source" : "Isolation_source"}, inplace=True)
 
     self.logger.debug("TABLE:Writing BankIt metadata out to a file")
     bankit_metadata.to_csv(self.output_prefix + ".src", sep='\t', index=False)

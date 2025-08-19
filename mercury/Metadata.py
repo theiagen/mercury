@@ -35,7 +35,7 @@ class Metadata:
 
   def bankit_metadata(self):
     bankit_required = ["submission_id", "collection_date", "country", "host"]
-    bankit_optional = ["isolate", "isolation_source", "biosample_accession", "bioproject_accession"]
+    bankit_optional = ["isolate", "isolation_source"]
     return bankit_required, bankit_optional
     
   def sra_metadata(self):
